@@ -44,8 +44,7 @@ as
     ( apex_web_service.make_rest_request
       (
         p_url => 'http://ergast.com/api/f1/drivers.json?limit=2000', 
-        p_http_method => 'GET'
-        --p_wallet_path => 'file:///home/oracle/https_wallet' 
+        p_http_method => 'GET' 
       )
     );
     commit;
@@ -66,7 +65,6 @@ as
       (
         p_url => 'http://ergast.com/api/f1/circuits.json?limit=1000', 
         p_http_method => 'GET'
-        --p_wallet_path => 'file:///home/oracle/https_wallet' 
       )
     );
     commit;
@@ -94,32 +92,41 @@ as
       p_in_url in clob
     ) 
     is
+    
+      lv_count number;
+      
     begin
    
-      insert into f1_race_json(
-        year
-        ,race
-      ) values 
-      ( p_in_year
-       ,apex_web_service.make_rest_request
-         (
-            p_url => p_in_url, 
-            p_http_method => 'GET'
+      -- check if year is already loaded, if then skip
+      select count(year) into lv_count
+      from f1_race_json
+      where year = p_in_year;
+      
+      if lv_count = 0 then
+        insert into f1_race_json(
+          year
+          ,race
+        ) values 
+        ( p_in_year
+         ,apex_web_service.make_rest_request
+           (
+              p_url => p_in_url, 
+              p_http_method => 'GET'
  
-         )
-       );   
-       
+           )
+         );   
+        commit;
+      end if;  
     end get_races;
     
   begin
-    delete from f1_race_json;
+  
     for rec in cur_get_season_year loop
       calling_url := replace(url,'{YEAR}',rec.season);
       --dbms_output.put_line(calling_url);
       get_races(rec.season,calling_url);
     end loop;
-    commit;
-
+    
   end load_f1_races;
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -144,32 +151,41 @@ as
          ,p_in_url in clob
         )
     is
+      lv_count number;
     begin
-     insert into f1_raceresults_json(
-        year
-        ,round
-        ,result
-      ) values 
-      ( p_in_year
-        ,p_in_round
-       ,apex_web_service.make_rest_request
-         (
-            p_url => p_in_url, 
-            p_http_method => 'GET'
+    
+    -- check if race is already loaded , if then skip the call and insert.
+     select count(year) into lv_count
+     from f1_raceresults_json
+     where year = p_in_year
+       and round = p_in_round;
+     
+     if lv_count = 0 then
+       insert into f1_raceresults_json(
+          year
+          ,round
+          ,result
+        ) values 
+        ( p_in_year
+          ,p_in_round
+          ,apex_web_service.make_rest_request
+           (
+              p_url => p_in_url, 
+              p_http_method => 'GET'
  
-         )
-       );
+           )
+         );
+       commit;  
+     end if;
     end insert_results;
     
   begin
-    delete from f1_raceresults_json;
     for rec in cur_get_f1_races loop
       tmp := replace(url,'{YEAR}',rec.season);
       calling_url := replace(tmp,'{ROUND}',rec.round);
       --dbms_output.put_line(calling_url);
       insert_results(rec.season,rec.round,calling_url);
     end loop;
-    commit;
   end load_f1_raceresults;
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -188,6 +204,7 @@ as
         --p_wallet_path => 'file:///home/oracle/https_wallet' 
       )
     );
+    commit;
   end load_f1_constructors;
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -208,29 +225,43 @@ as
          ,p_in_url in clob
         )
     is
+     lv_count number;
     begin
-     insert into f1_driverstandings_json(
-        year
-        ,driverstanding
-      ) values 
-      ( p_in_year
-       ,apex_web_service.make_rest_request
-         (
-            p_url => p_in_url, 
-            p_http_method => 'GET'
+    
+     -- Reload current years driverstandings since the update until end of season.
+     if p_in_year = to_number(trunc(sysdate),'RRRR') then
+       lv_count := 0;
+       delete from f1_driverstandings_json where year = to_number(trunc(sysdate),'RRRR');
+     else  
+       -- check if results for year already loaded. if then skip to load it.
+       select count(year) into lv_count
+       from f1_driverstandings_json
+       where year = p_in_year;
+     end if;
+     
+     if lv_count = 0 then
+       insert into f1_driverstandings_json(
+          year
+          ,driverstanding
+        ) values 
+        ( p_in_year
+          ,apex_web_service.make_rest_request
+           (
+              p_url => p_in_url, 
+              p_http_method => 'GET'
  
-         )
-       );
+           )
+        );
+       commit;
+     end if;
     end insert_results;
     
   begin
-    delete from f1_driverstandings_json;
     for rec in cur_get_f1_seasons loop
       calling_url := replace(url,'{YEAR}',rec.season);
       --dbms_output.put_line(calling_url);
       insert_results(rec.season,calling_url);
-    end loop;
-    commit;  
+    end loop;  
   end load_f1_driverstandings;
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -251,29 +282,43 @@ as
          ,p_in_url in clob
         )
     is
+      lv_count number;
     begin
-     insert into f1_constructorstandings_json(
-        year
-        ,constructorstandings
-      ) values 
-      ( p_in_year
-       ,apex_web_service.make_rest_request
-         (
-            p_url => p_in_url, 
-            p_http_method => 'GET'
+    
+     -- Reload current years constructortandings since the update until end of season.
+     if p_in_year = to_number(trunc(sysdate),'RRRR') then
+       lv_count := 0;
+       delete from f1_constructorstandings_json where year = to_number(trunc(sysdate),'RRRR');
+     else  
+       -- check if results for year already loaded. if then skip to load it.
+       select count(year) into lv_count
+       from f1_constructorstandings_json
+       where year = p_in_year;
+     end if;
+     
+     if lv_count = 0 then
+       insert into f1_constructorstandings_json(
+          year
+          ,constructorstandings
+        ) values 
+        ( p_in_year
+         ,apex_web_service.make_rest_request
+           (
+              p_url => p_in_url, 
+              p_http_method => 'GET'
  
-         )
-       );
+           )
+         );
+       commit;
+     end if;
     end insert_results;
     
   begin
-    delete from f1_constructorstandings_json;
     for rec in cur_get_f1_seasons loop
       calling_url := replace(url,'{YEAR}',rec.season);
       --dbms_output.put_line(calling_url);
       insert_results(rec.season,calling_url);
-    end loop;
-    commit;    
+    end loop;   
   end load_f1_constructorstandings;
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -295,31 +340,125 @@ as
          ,p_in_url in clob
         )
     is
+      lv_count number;
     begin
-     insert into f1_seasons_race_dates(
-        year
-        ,race_date
-      ) values 
-      ( p_in_year
-       ,apex_web_service.make_rest_request
-         (
-            p_url => p_in_url, 
-            p_http_method => 'GET'
+    
+    -- check if racedates already loaded , if then skip
+     select count(year) into lv_count
+     from f1_seasons_race_dates
+     where year = p_in_year;
+     
+     if lv_count = 0 then
+       insert into f1_seasons_race_dates(
+          year
+          ,race_date
+        ) values 
+        ( p_in_year
+         ,apex_web_service.make_rest_request
+           (
+              p_url => p_in_url, 
+              p_http_method => 'GET'
  
-         )
-       );
+           )
+         );
+       commit;
+     end if;
     end insert_results;
     
   begin
-    delete from f1_seasons_race_dates;
+  
     for rec in cur_get_f1_seasons loop
       calling_url := replace(url,'{YEAR}',rec.season);
       --dbms_output.put_line(calling_url);
       insert_results(rec.season,calling_url);
     end loop;
-    commit;  
+    
   end load_f1_seasons_racedates;
 
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+  procedure load_f1_laptimes is
+  url clob := 'http://ergast.com/api/f1/{YEAR}/{ROUND}/laps/{LAP}.json?limit=1000';
+  calling_url clob;
+  tmp_url clob;
+  tmp1_url clob;
+  lv_number_of_races number;
+  lv_number_of_laps number;
+    
+  cursor cur_get_season_year is
+  select season
+  from v_f1_season
+  where to_number(season) > 1995;
+                        
+  --inline
+  procedure get_laps(
+      p_in_year in number,
+      p_in_round in number,
+      p_in_lap in number,
+      p_in_url clob
+  ) 
+  is
+  
+    lv_count number;
+    
+  begin
+  
+    select count(lap) into lv_count
+    from f1_laptimes_json
+    where year = p_in_year
+      and round = p_in_round
+      and lap = p_in_lap;
+    
+    if lv_count = 0 then   
+      insert into f1_laptimes_json(
+        year
+        ,round
+        ,lap
+        ,laptimes 
+      ) values 
+      ( p_in_year,
+        p_in_round,
+        p_in_lap,
+        apex_web_service.make_rest_request
+          (
+            p_url => p_in_url, 
+            p_http_method => 'GET'  
+          )
+      );   
+      commit;
+    end if;
+   end get_laps;
+    
+  begin
+      
+    for rec in cur_get_season_year loop
+    
+      select count(round) 
+        into lv_number_of_races
+      from v_f1_races
+      where to_number(season) = to_number(rec.season);
+            
+      for i in 1..lv_number_of_races loop
+      
+        select to_number(laps) 
+          into lv_number_of_laps
+        from v_f1_results
+        where to_number(position) = 1
+          and to_number(season) = rec.season
+          and to_number(race) = i; 
+        
+        for j in 1..lv_number_of_laps loop
+          tmp_url := replace(url,'{YEAR}',rec.season);
+          tmp1_url := replace(tmp_url,'{ROUND}',i);      
+          calling_url := replace(tmp1_url,'{LAP}',j);
+          get_laps(rec.season,i,j,calling_url);
+        end loop;
+        
+      end loop;  
+    end loop;
+    
+  end load_f1_laptimes;
+  
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   
   procedure load_json as
