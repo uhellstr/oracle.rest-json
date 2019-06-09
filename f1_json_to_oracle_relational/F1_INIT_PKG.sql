@@ -229,9 +229,9 @@ as
     begin
     
      -- Reload current years driverstandings since the update until end of season.
-     if p_in_year = to_number(trunc(sysdate),'RRRR') then
+     if p_in_year = to_number(to_char(trunc(sysdate),'RRRR')) then
        lv_count := 0;
-       delete from f1_driverstandings_json where year = to_number(trunc(sysdate),'RRRR');
+       delete from f1_driverstandings_json where year = to_number(to_char(trunc(sysdate),'RRRR'));
      else  
        -- check if results for year already loaded. if then skip to load it.
        select count(year) into lv_count
@@ -286,9 +286,9 @@ as
     begin
     
      -- Reload current years constructortandings since the update until end of season.
-     if p_in_year = to_number(trunc(sysdate),'RRRR') then
+     if p_in_year = to_number(to_char(trunc(sysdate),'RRRR')) then
        lv_count := 0;
-       delete from f1_constructorstandings_json where year = to_number(trunc(sysdate),'RRRR');
+       delete from f1_constructorstandings_json where year = to_number(to_char(trunc(sysdate),'RRRR'));
      else  
        -- check if results for year already loaded. if then skip to load it.
        select count(year) into lv_count
