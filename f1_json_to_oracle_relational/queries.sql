@@ -1,4 +1,71 @@
---- Some queries --
+-- Give us all world champions
+
+select
+    d.season,
+    d.race,
+    d.position,
+    d.positiontext,
+    d.points,
+    d.wins,
+    d.driverid,
+    d.permanentnumber,
+    d.code,
+    d.info,
+    d.givenname,
+    d.familyname,
+    d.dateofbirth,
+    d.nationality,
+    d.constructorid,
+    d.constructorinfo,
+    d.constructorname,
+    d.constructornationality
+from
+    f1_data.v_f1_driverstandings d
+    where d.race = (select max(e.race)
+                    from f1_data.v_f1_driverstandings e
+                    where e.season = d.season)
+      and d.position = 1
+      and d.season < 2019;
+
+-- Give us the number of championships a champ has got! E.g who is the ultimate champ!
+
+select *
+from
+(
+select driverid,
+       count(driverid) as championships_won
+from 
+(
+select
+    d.season,
+    d.race,
+    d.position,
+    d.positiontext,
+    d.points,
+    d.wins,
+    d.driverid,
+    d.permanentnumber,
+    d.code,
+    d.info,
+    d.givenname,
+    d.familyname,
+    d.dateofbirth,
+    d.nationality,
+    d.constructorid,
+    d.constructorinfo,
+    d.constructorname,
+    d.constructornationality
+from
+    f1_data.v_f1_driverstandings d
+    where d.race = (select max(e.race)
+                    from f1_data.v_f1_driverstandings e
+                    where e.season = d.season)
+      and d.position = 1
+      and d.season < 2019
+) group by driverid
+) order by championships_won desc;
+
+--- Show all ME9 Ericssons F1 races during his career --
 select *
 from v_f1_results
 where pilotnr = 9
@@ -28,6 +95,36 @@ where locality = 'Monza'
   and driverid = 'alonso'
 order by to_number(season),to_number(race);
 
+-- What is the fastest laptime set on Monza on the current layout on the track from 2000 and forward ?
+
+select 
+    l.season,
+    l.round,
+    l.info,
+    l.racename,
+    r.circuitid,
+    l.url,
+    r.circuitname,
+    l.race_date,
+    l.race_time,
+    l.lap_number,
+    l.driverid,
+    l.position,
+    l.laptime,
+    to_millis(l.laptime) as millis
+from
+    f1_data.v_f1_laptimes l
+inner join f1_data.v_f1_races r
+on (r.season = l.season and  r.round = l.round)
+where r.season > 1999
+  and r.circuitid = 'monza'
+  and to_millis(l.laptime) = (select min(to_millis(x.laptime))
+                              from f1_data.v_f1_laptimes x
+                              inner join f1_data.v_f1_races y
+                              on (y.season = x.season and  y.round = x.round)
+                              where y.season > 1999
+                               and y.circuitid = 'monza');
+                               
 -- List info about swedish drivers in F1 history
 select * 
 from v_f1_drivers
@@ -60,7 +157,14 @@ select sum(eri.points) as totalcareerpoints
 from v_f1_results eri
 where eri.driverid = 'ericsson'
   and eri.points > 0;
+  
 
+-- How man points did Alonso score during his F1 career
+select sum(eri.points) as totalcareerpoints
+from v_f1_results eri
+where eri.driverid = 'alonso'
+  and eri.points > 0;
+  
 -- Get the median position for ME9 Ericsson during his F1 career
 
 select r.driverid,
@@ -69,7 +173,7 @@ from v_f1_results r
 where r.driverid = 'ericsson'
 group by r.driverid;
 
--- Get median position for all drivers in the modern era
+-- Get median posititon for all drivers in the modern era 2010-2019
 
 select driverid,
        givenname,
@@ -90,26 +194,71 @@ group by r.driverid,r.givenname,r.familyname
 ) where number_of_races > 10
 order by median_position asc,number_of_races desc;
 
+-- Get the median score for drivers between 2000-2010
+select driverid,
+       givenname,
+       familyname,
+       median_position,
+       number_of_races
+from
+(
+select r.driverid,
+       r.givenname,
+       r.familyname,
+       median(to_number(r.position)) as median_position,
+       (select count(b.driverid) from v_f1_results b
+        where b.driverid = r.driverid) as number_of_races
+from v_f1_results r
+where to_number(r.season) between 2000 and 2010              
+group by r.driverid,r.givenname,r.familyname
+) where number_of_races > 10
+order by median_position asc,number_of_races desc;
 
+-- Get the median score for drivers late 90's
 
+select driverid,
+       givenname,
+       familyname,
+       median_position,
+       number_of_races
+from
+(
+select r.driverid,
+       r.givenname,
+       r.familyname,
+       median(to_number(r.position)) as median_position,
+       (select count(b.driverid) from v_f1_results b
+        where b.driverid = r.driverid) as number_of_races
+from v_f1_results r
+where to_number(r.season) between 1990 and 2000              
+group by r.driverid,r.givenname,r.familyname
+) where number_of_races > 10
+order by median_position asc,number_of_races desc;
+
+--And the median score of drivers during the 80's era..
+select driverid,
+       givenname,
+       familyname,
+       median_position,
+       number_of_races
+from
+(
+select r.driverid,
+       r.givenname,
+       r.familyname,
+       median(to_number(r.position)) as median_position,
+       (select count(b.driverid) from v_f1_results b
+        where b.driverid = r.driverid) as number_of_races
+from v_f1_results r
+where to_number(r.season) between 1980 and 1990              
+group by r.driverid,r.givenname,r.familyname
+) where number_of_races > 10
+order by median_position asc,number_of_races desc;
 
 -- Get the number of races that ME9 partisipated in F1.
 select count(*) 
 from v_f1_results
 where driverid = 'ericsson';
-
--- Get data from wikipedia for further parsing
-
-select apex_web_service.make_rest_request(
-    p_url         => 'https://en.wikipedia.org/wiki/Marcus_Ericsson', 
-    p_http_method => 'GET',
-    p_wallet_path => 'file:///home/oracle/oracle_wallet/https_wallet' 
-) as result from dual;
-
-
--- <meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/f/ff/Marcus_Ericsson_at_the_2018_British_Grand_Prix_%28cropped%29.jpg"/>
-
-
 
 -- Get races for current year not yet done.  
 select a.season,
@@ -140,29 +289,29 @@ where r.season = to_char(trunc(sysdate),'RRRR')
 order by to_number(r.position) asc;
 
 
--- Try to parse  and Get race date from wikipedia for a race not yet in the database
-
-select c.round,
-       c.info,
-       (select to_date(regexp_substr(substr(apex_web_service.make_rest_request
-       (
-         p_url         => c.info, 
-         p_http_method => 'GET',
-         p_wallet_path => 'file:///home/oracle/oracle_wallet/https_wallet' 
-       ),instr(apex_web_service.make_rest_request
-                (
-                  p_url         => c.info, 
-                  p_http_method => 'GET',
-                  p_wallet_path => 'file:///home/oracle/oracle_wallet/https_wallet' 
-                 ),'mw-formatted-date',1,1),100),'\d{4}-\d{2}-\d{2}', 1, 1, 'im'),'RRRR-MM-DD') 
-                 from dual) as race_date
-from v_f1_races c
-where c.season = to_char(trunc(sysdate),'RRRR')
-  and c.round in (select a.round
-                  from v_f1_races a
-                  where round not in ( select b.race
-                                       from v_f1_results b
-                                       where a.season = b.season
-                                         and a.round = b.race)
-                    and a.season = to_char(trunc(sysdate),'RRRR'));
-  
+---- Try to parse  and Get race date from wikipedia for a race not yet in the database
+--
+--select c.round,
+--       c.info,
+--       (select to_date(regexp_substr(substr(apex_web_service.make_rest_request
+--       (
+--         p_url         => c.info, 
+--         p_http_method => 'GET',
+--         p_wallet_path => 'file:///home/oracle/oracle_wallet/https_wallet' 
+--       ),instr(apex_web_service.make_rest_request
+--                (
+--                  p_url         => c.info, 
+--                  p_http_method => 'GET',
+--                  p_wallet_path => 'file:///home/oracle/oracle_wallet/https_wallet' 
+--                 ),'mw-formatted-date',1,1),100),'\d{4}-\d{2}-\d{2}', 1, 1, 'im'),'RRRR-MM-DD') 
+--                 from dual) as race_date
+--from v_f1_races c
+--where c.season = to_char(trunc(sysdate),'RRRR')
+--  and c.round in (select a.round
+--                  from v_f1_races a
+--                  where round not in ( select b.race
+--                                       from v_f1_results b
+--                                       where a.season = b.season
+--                                         and a.round = b.race)
+--                    and a.season = to_char(trunc(sysdate),'RRRR'));
+--  
