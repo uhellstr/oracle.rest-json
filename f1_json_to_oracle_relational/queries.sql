@@ -260,6 +260,19 @@ select count(*)
 from v_f1_results
 where driverid = 'ericsson';
 
+-- How many races did the swedish drivers partisipate in total ?
+select *
+from
+(
+select r.givenname
+       ,r.familyname
+       ,count(r.race) as total_races
+from v_f1_results r
+where r.nationality = 'Swedish'
+group by r.givenname
+         ,r.familyname
+) order by total_races desc;
+
 -- Get races for current year not yet done.  
 select a.season,
        a.round,
