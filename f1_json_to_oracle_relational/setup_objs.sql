@@ -1,6 +1,25 @@
 @F1_DATA_TBS.sql
 @F1_INIT_PKG.sql
 
+create or replace function f1_data.to_millis 
+(
+    p_in_laptime in varchar2
+) return number 
+is
+  v_minutes number;
+  v_seconds number;
+  v_millis  number;
+  
+begin
+
+    v_minutes := to_number(substr(p_in_laptime,1,instr(p_in_laptime,':',1)-1));
+    v_seconds := to_number(substr(p_in_laptime,instr(p_in_laptime,':',1)+1,(length(p_in_laptime) - instr(p_in_laptime,'.',1)-1)));
+    v_millis  := to_number(substr(p_in_laptime,instr(p_in_laptime,'.',-1)+1));
+    return  (v_minutes * 60000) + (v_seconds * 1000) + v_millis;
+    
+end to_millis;
+/
+
 BEGIN
 
   --exec dbms_scheduler.drop_schedule('SCH_F1_LOAD_DATA');
