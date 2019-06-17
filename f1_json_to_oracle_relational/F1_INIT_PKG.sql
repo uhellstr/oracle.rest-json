@@ -11,6 +11,27 @@ as
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+  function ret_next_race_in_cur_season
+  return number result_cache
+  as
+    lv_retval number;
+  begin
+  
+    select round into lv_retval
+    from
+    (
+      select round
+      from v_f1_upcoming_races
+      where to_date(race_date,'YYYY-MM-DD') > trunc(sysdate)
+      order by to_number(round)
+    ) where rownum < 2;
+    
+    return lv_retval;
+    
+  end ret_next_race_in_cur_season;
+
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+
   procedure load_f1_seasons
   is
   begin
@@ -137,6 +158,7 @@ as
     url clob := 'http://ergast.com/api/f1/{YEAR}/{ROUND}/results.json';
     tmp clob;
     calling_url clob;
+    lv_next_round_nr number;
     
     cursor cur_get_f1_races is
     select season
@@ -151,40 +173,48 @@ as
          ,p_in_url in clob
         )
     is
-      lv_count number;
-    begin
     
-    -- check if race is already loaded , if then skip the call and insert.
-     select count(year) into lv_count
-     from f1_raceresults_json
-     where year = p_in_year
-       and round = p_in_round;
+      lv_count number;
+      
+    begin
+       
+      select count(year) into lv_count
+      from f1_raceresults_json
+      where year = p_in_year
+        and round = p_in_round;
      
-     if lv_count = 0 then
-       insert into f1_raceresults_json(
+      if lv_count = 0 then
+        insert into f1_raceresults_json(
           year
           ,round
           ,result
         ) values 
-        ( p_in_year
-          ,p_in_round
-          ,apex_web_service.make_rest_request
-           (
-              p_url => p_in_url, 
-              p_http_method => 'GET'
- 
-           )
-         );
-       commit;  
-     end if;
+          ( p_in_year
+              ,p_in_round
+              ,apex_web_service.make_rest_request
+               (
+                  p_url => p_in_url, 
+                  p_http_method => 'GET' 
+               )
+          );
+        commit;  
+      end if;  
+      
     end insert_results;
     
   begin
+   
     for rec in cur_get_f1_races loop
-      tmp := replace(url,'{YEAR}',rec.season);
-      calling_url := replace(tmp,'{ROUND}',rec.round);
-      --dbms_output.put_line(calling_url);
-      insert_results(rec.season,rec.round,calling_url);
+      if rec.season = to_number(to_char(sysdate,'RRRR')) then      
+        lv_next_round_nr := ret_next_race_in_cur_season;
+      else
+       lv_next_round_nr := 999;
+      end if;
+      if rec.round < lv_next_round_nr then
+        tmp := replace(url,'{YEAR}',rec.season);
+        calling_url := replace(tmp,'{ROUND}',rec.round);
+        insert_results(rec.season,rec.round,calling_url);
+      end if;
     end loop;
   end load_f1_raceresults;
 
@@ -384,6 +414,7 @@ as
   tmp1_url clob;
   lv_number_of_races number;
   lv_number_of_laps number;
+  lv_next_round_nr number; 
     
   cursor cur_get_season_year is
   select season
@@ -431,30 +462,40 @@ as
     
   begin
       
-    for rec in cur_get_season_year loop
+    for rec in cur_get_season_year loop 
     
-      select count(round) 
-        into lv_number_of_races
-      from v_f1_races
-      where to_number(season) = to_number(rec.season);
-            
+      if rec.season < to_number(to_char(sysdate,'RRRR')) then
+        select max(round) into lv_number_of_races
+        from v_f1_races
+        where season = rec.season;
+      else
+        lv_number_of_races := ret_next_race_in_cur_season - 1;
+      end if;  
+      
       for i in 1..lv_number_of_races loop
       
         select to_number(laps) 
-          into lv_number_of_laps
+        into lv_number_of_laps
         from v_f1_results
         where to_number(position) = 1
           and to_number(season) = rec.season
           and to_number(race) = i; 
         
         for j in 1..lv_number_of_laps loop
-          tmp_url := replace(url,'{YEAR}',rec.season);
-          tmp1_url := replace(tmp_url,'{ROUND}',i);      
-          calling_url := replace(tmp1_url,'{LAP}',j);
-          get_laps(rec.season,i,j,calling_url);
+            -- In current season do not try to load races not yet raced!
+            if rec.season = to_number(to_char(sysdate,'RRRR')) then
+              lv_next_round_nr := ret_next_race_in_cur_season;
+            else
+              lv_next_round_nr := 999;
+            end if;
+            if i < lv_next_round_nr then
+              tmp_url := replace(url,'{YEAR}',rec.season);
+              tmp1_url := replace(tmp_url,'{ROUND}',i);      
+              calling_url := replace(tmp1_url,'{LAP}',j);            
+              get_laps(rec.season,i,j,calling_url);
+            end if;
         end loop;
-        
-      end loop;  
+      end loop;   
     end loop;
     
   end load_f1_laptimes;
@@ -472,6 +513,7 @@ as
     load_f1_driverstandings;
     load_f1_constructorstandings;
     load_f1_seasons_racedates;
+    load_f1_laptimes;
   end load_json;
 
 end f1_init_pkg;
