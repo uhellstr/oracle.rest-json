@@ -1,6 +1,11 @@
 @F1_DATA_TBS.sql
 @F1_INIT_PKG.sql
 
+--exec dbms_scheduler.drop_schedule('SCH_F1_LOAD_DATA');
+--exec dbms_scheduler.drop_job('JOB_RUN_F1_INIT_PKG', false);
+--exec dbms_scheduler.drop_chain('CHAIN_1', false);
+--exec dbms_scheduler.drop_program('F1_INIT_DATA', false);
+  
 create or replace function f1_data.to_millis 
 (
     p_in_laptime in varchar2
