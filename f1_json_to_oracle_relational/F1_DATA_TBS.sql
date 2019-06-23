@@ -2,173 +2,22 @@ REM
 REM Cleanup
 REM
 declare
-  lv_count number;
+
+  lv_stmt clob;
+  
+  cursor cur_get_f1_tables is
+  select table_name
+  from dba_tables
+  where owner = 'F1_DATA'
+  order by table_name;
 begin
-
-   select count(*) into lv_count
-   from dba_tables
-   where owner = 'F1_DATA'
-     and lower(table_name) = 'f1_seasons_json';
-
-    if lv_count > 0 then
-      execute immediate 'drop table f1_data.f1_seasons_json purge';
-    end if;
+  for rec in cur_get_f1_tables loop
+    lv_stmt := 'DROP TABLE F1_DATA.'||rec.table_name||' PURGE';
+    execute immediate lv_stmt;
+  end loop;
 end;
 /
 
-declare
-  lv_count number;
-begin
-
-   select count(*) into lv_count
-   from dba_tables
-   where owner = 'F1_DATA'
-     and lower(table_name) = 'f1_drivers_json';
-
-    if lv_count > 0 then
-      execute immediate 'drop table f1_data.f1_drivers_json purge';
-    end if;
-end;
-/
-
-declare
-  lv_count number;
-begin
-
-   select count(*) into lv_count
-   from dba_tables
-   where owner = 'F1_DATA'
-     and lower(table_name) = 'f1_tracks_json';
-
-    if lv_count > 0 then
-      execute immediate 'drop table f1_data.f1_tracks_json purge';
-    end if;
-end;
-/
-
-declare
-  lv_count number;
-begin
-
-   select count(*) into lv_count
-   from dba_tables
-   where owner = 'F1_DATA'
-     and lower(table_name) = 'f1_race_json';
-
-    if lv_count > 0 then
-      execute immediate 'drop table f1_data.f1_race_json purge';
-    end if;
-end;
-/
-
-declare
-  lv_count number;
-begin
-
-   select count(*) into lv_count
-   from dba_tables
-   where owner = 'F1_DATA'
-     and lower(table_name) = 'f1_raceresults_json';
-
-    if lv_count > 0 then
-      execute immediate 'drop table f1_data.f1_raceresults_json purge';
-    end if;
-end;
-/
-
-declare
-  lv_count number;
-begin
-
-   select count(*) into lv_count
-   from dba_tables
-   where owner = 'F1_DATA'
-     and lower(table_name) = 'f1_constructors_json';
-
-    if lv_count > 0 then
-      execute immediate 'drop table f1_data.f1_constructors_json purge';
-    end if;
-end;
-/
-
-declare
-  lv_count number;
-begin
-
-   select count(*) into lv_count
-   from dba_tables
-   where owner = 'F1_DATA'
-     and lower(table_name) = 'f1_driverstandings_json';
-
-    if lv_count > 0 then
-      execute immediate 'drop table f1_data.f1_driverstandings_json purge';
-    end if;
-end;
-/
-
-declare
-  lv_count number;
-begin
-
-   select count(*) into lv_count
-   from dba_tables
-   where owner = 'F1_DATA'
-     and lower(table_name) = 'f1_constructorstandings_json';
-
-    if lv_count > 0 then
-      execute immediate 'drop table f1_data.f1_constructorstandings_json purge';
-    end if;
-end;
-/
-
-declare
-  lv_count number;
-begin
-
-   select count(*) into lv_count
-   from dba_tables
-   where owner = 'F1_DATA'
-     and lower(table_name) = 'f1_constructorstandings_json';
-
-    if lv_count > 0 then
-      execute immediate 'drop table f1_data.f1_constructorstandings_json purge';
-    end if;
-end;
-/
-
-declare
-  lv_count number;
-begin
-
-   select count(*) into lv_count
-   from dba_tables
-   where owner = 'F1_DATA'
-     and lower(table_name) = 'f1_seasons_race_dates';
-
-    if lv_count > 0 then
-      execute immediate 'drop table f1_data.f1_seasons_race_dates purge';
-    end if;
-end;
-/
-
-declare
-  lv_count number;
-begin
-
-   select count(*) into lv_count
-   from dba_tables
-   where owner = 'F1_DATA'
-     and lower(table_name) = 'f1_laptimes_json';
-
-    if lv_count > 0 then
-      execute immediate 'drop table f1_data.f1_laptimes_json purge';
-    end if;
-end;
-/
-
-REM
-REM create tables and views
-REM
 
 --------------------------------------------------------
 --  DDL for Table F1_CONSTRUCTORS_JSON
@@ -219,6 +68,17 @@ REM
 	"ROUND" NUMBER(4,0), 
 	"LAP" NUMBER(4,0), 
 	"LAPTIMES" CLOB
+   ) ;
+--------------------------------------------------------
+--  DDL for Table F1_QUALIFICATION_JSON
+--------------------------------------------------------
+
+  CREATE TABLE "F1_DATA"."F1_QUALIFICATION_JSON" 
+   (	"SEASONID" NUMBER GENERATED ALWAYS AS IDENTITY MINVALUE 1 MAXVALUE 9999999999999999999999999999 INCREMENT BY 1 START WITH 1 CACHE 20 NOORDER  NOCYCLE  NOKEEP  NOSCALE , 
+	"FETCHED_AT" TIMESTAMP (6) DEFAULT systimestamp, 
+	"YEAR" NUMBER, 
+	"ROUND" NUMBER, 
+	"QUALIFICATION" CLOB
    ) ;
 --------------------------------------------------------
 --  DDL for Table F1_RACE_JSON
@@ -287,6 +147,141 @@ from f1_constructors_json ftab,
                           )
                ) f1
 ;
+--------------------------------------------------------
+--  DDL for Index F1_RACERESULTS_JSON_PK
+--------------------------------------------------------
+
+  CREATE UNIQUE INDEX "F1_DATA"."F1_RACERESULTS_JSON_PK" ON "F1_DATA"."F1_RACERESULTS_JSON" ("RESULTID", "YEAR", "ROUND") 
+  ;
+--------------------------------------------------------
+--  DDL for Index F1_DRIVERSTANDINGS_JSON_PK
+--------------------------------------------------------
+
+  CREATE UNIQUE INDEX "F1_DATA"."F1_DRIVERSTANDINGS_JSON_PK" ON "F1_DATA"."F1_DRIVERSTANDINGS_JSON" ("STANDINGID", "YEAR") 
+  ;
+--------------------------------------------------------
+--  DDL for Index F1_QUALIFICATION_JSON_PK
+--------------------------------------------------------
+
+  CREATE UNIQUE INDEX "F1_DATA"."F1_QUALIFICATION_JSON_PK" ON "F1_DATA"."F1_QUALIFICATION_JSON" ("YEAR", "ROUND", "SEASONID") 
+  ;
+--------------------------------------------------------
+--  DDL for Index F1_RACE_JSON_PK
+--------------------------------------------------------
+
+  CREATE UNIQUE INDEX "F1_DATA"."F1_RACE_JSON_PK" ON "F1_DATA"."F1_RACE_JSON" ("RACID", "YEAR") 
+  ;
+--------------------------------------------------------
+--  DDL for Index F1_CONSTRUCTORSTANDINGS_JSON_PK
+--------------------------------------------------------
+
+  CREATE UNIQUE INDEX "F1_DATA"."F1_CONSTRUCTORSTANDINGS_JSON_PK" ON "F1_DATA"."F1_CONSTRUCTORSTANDINGS_JSON" ("CONSTRUCTORID", "YEAR") 
+  ;
+--------------------------------------------------------
+--  DDL for Index F1_LAPTIMES_JSON_PK
+--------------------------------------------------------
+
+  CREATE UNIQUE INDEX "F1_DATA"."F1_LAPTIMES_JSON_PK" ON "F1_DATA"."F1_LAPTIMES_JSON" ("RESULTID", "YEAR", "ROUND", "LAP") 
+  ;
+--------------------------------------------------------
+--  Constraints for Table F1_DRIVERSTANDINGS_JSON
+--------------------------------------------------------
+
+  ALTER TABLE "F1_DATA"."F1_DRIVERSTANDINGS_JSON" MODIFY ("STANDINGID" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_DRIVERSTANDINGS_JSON" ADD CONSTRAINT "DRIVERSTANDING_ISJSON" CHECK (driverstanding is json) ENABLE;
+  ALTER TABLE "F1_DATA"."F1_DRIVERSTANDINGS_JSON" MODIFY ("YEAR" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_DRIVERSTANDINGS_JSON" ADD CONSTRAINT "F1_DRIVERSTANDINGS_JSON_PK" PRIMARY KEY ("STANDINGID", "YEAR")
+  USING INDEX  ENABLE;
+--------------------------------------------------------
+--  Constraints for Table F1_RACERESULTS_JSON
+--------------------------------------------------------
+
+  ALTER TABLE "F1_DATA"."F1_RACERESULTS_JSON" MODIFY ("RESULTID" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_RACERESULTS_JSON" ADD CONSTRAINT "RESULT_ISJSON" CHECK (result is json) ENABLE;
+  ALTER TABLE "F1_DATA"."F1_RACERESULTS_JSON" MODIFY ("YEAR" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_RACERESULTS_JSON" MODIFY ("ROUND" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_RACERESULTS_JSON" ADD CONSTRAINT "F1_RACERESULTS_JSON_PK" PRIMARY KEY ("RESULTID", "YEAR", "ROUND")
+  USING INDEX  ENABLE;
+  
+--------------------------------------------------------
+--  DDL for Index F1_SEASONS_RACE_DATES_PK
+--------------------------------------------------------
+
+  CREATE UNIQUE INDEX "F1_DATA"."F1_SEASONS_RACE_DATES_PK" ON "F1_DATA"."F1_SEASONS_RACE_DATES" ("SEASONID", "YEAR") 
+  ;  
+--------------------------------------------------------
+--  Constraints for Table F1_CONSTRUCTORSTANDINGS_JSON
+--------------------------------------------------------
+
+  ALTER TABLE "F1_DATA"."F1_CONSTRUCTORSTANDINGS_JSON" MODIFY ("CONSTRUCTORID" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_CONSTRUCTORSTANDINGS_JSON" ADD CONSTRAINT "CONSTRUCTORSTANDING_ISJSON" CHECK (constructorstandings is json) ENABLE;
+  ALTER TABLE "F1_DATA"."F1_CONSTRUCTORSTANDINGS_JSON" MODIFY ("YEAR" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_CONSTRUCTORSTANDINGS_JSON" ADD CONSTRAINT "F1_CONSTRUCTORSTANDINGS_JSON_PK" PRIMARY KEY ("CONSTRUCTORID", "YEAR")
+  USING INDEX  ENABLE;
+--------------------------------------------------------
+--  Constraints for Table F1_DRIVERS_JSON
+--------------------------------------------------------
+
+  ALTER TABLE "F1_DATA"."F1_DRIVERS_JSON" MODIFY ("DRIVERID" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_DRIVERS_JSON" ADD CONSTRAINT "DRIVERS_ISJSON" CHECK (drivers is json) ENABLE;
+--------------------------------------------------------
+--  Constraints for Table F1_SEASONS_JSON
+--------------------------------------------------------
+
+  ALTER TABLE "F1_DATA"."F1_SEASONS_JSON" MODIFY ("SEASONID" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_SEASONS_JSON" ADD CONSTRAINT "SEASON_ISJSON" CHECK (season is json) ENABLE;
+--------------------------------------------------------
+--  Constraints for Table F1_RACE_JSON
+--------------------------------------------------------
+
+  ALTER TABLE "F1_DATA"."F1_RACE_JSON" MODIFY ("RACID" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_RACE_JSON" ADD CONSTRAINT "RACE_ISJSON" CHECK (race is json) ENABLE;
+  ALTER TABLE "F1_DATA"."F1_RACE_JSON" MODIFY ("YEAR" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_RACE_JSON" ADD CONSTRAINT "F1_RACE_JSON_PK" PRIMARY KEY ("RACID", "YEAR")
+  USING INDEX  ENABLE;
+--------------------------------------------------------
+--  Constraints for Table F1_SEASONS_RACE_DATES
+--------------------------------------------------------
+
+  ALTER TABLE "F1_DATA"."F1_SEASONS_RACE_DATES" MODIFY ("SEASONID" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_SEASONS_RACE_DATES" ADD CONSTRAINT "RACEDATE_ISJSON" CHECK (race_date is json) ENABLE;
+  ALTER TABLE "F1_DATA"."F1_SEASONS_RACE_DATES" MODIFY ("YEAR" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_SEASONS_RACE_DATES" ADD CONSTRAINT "F1_SEASONS_RACE_DATES_PK" PRIMARY KEY ("SEASONID", "YEAR")
+  USING INDEX  ENABLE;
+--------------------------------------------------------
+--  Constraints for Table F1_LAPTIMES_JSON
+--------------------------------------------------------
+
+  ALTER TABLE "F1_DATA"."F1_LAPTIMES_JSON" MODIFY ("RESULTID" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_LAPTIMES_JSON" ADD CONSTRAINT "LAPTIME_ISJSON" CHECK (laptimes is json) ENABLE;
+  ALTER TABLE "F1_DATA"."F1_LAPTIMES_JSON" MODIFY ("YEAR" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_LAPTIMES_JSON" MODIFY ("ROUND" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_LAPTIMES_JSON" MODIFY ("LAP" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_LAPTIMES_JSON" ADD CONSTRAINT "F1_LAPTIMES_JSON_PK" PRIMARY KEY ("RESULTID", "YEAR", "ROUND", "LAP")
+  USING INDEX  ENABLE;
+--------------------------------------------------------
+--  Constraints for Table F1_CONSTRUCTORS_JSON
+--------------------------------------------------------
+
+  ALTER TABLE "F1_DATA"."F1_CONSTRUCTORS_JSON" MODIFY ("CONSTRUCTORTID" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_CONSTRUCTORS_JSON" ADD CONSTRAINT "CONSTRUCTOR_ISJSON" CHECK (constructor is json) ENABLE;
+--------------------------------------------------------
+--  Constraints for Table F1_TRACKS_JSON
+--------------------------------------------------------
+
+  ALTER TABLE "F1_DATA"."F1_TRACKS_JSON" MODIFY ("TRACKID" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_TRACKS_JSON" ADD CONSTRAINT "TRACKID_ISJSON" CHECK (tracks is json) ENABLE;
+--------------------------------------------------------
+--  Constraints for Table F1_QUALIFICATION_JSON
+--------------------------------------------------------
+
+  ALTER TABLE "F1_DATA"."F1_QUALIFICATION_JSON" MODIFY ("SEASONID" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_QUALIFICATION_JSON" ADD CONSTRAINT "QUALIFICATION_ISJSON" CHECK (qualification is json) ENABLE;
+  ALTER TABLE "F1_DATA"."F1_QUALIFICATION_JSON" MODIFY ("YEAR" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_QUALIFICATION_JSON" MODIFY ("ROUND" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_QUALIFICATION_JSON" ADD CONSTRAINT "F1_QUALIFICATION_JSON_PK" PRIMARY KEY ("YEAR", "ROUND", "SEASONID")
+  USING INDEX  ENABLE;
+  
 --------------------------------------------------------
 --  DDL for View V_F1_CONSTRUCTORSTANDINGS
 --------------------------------------------------------
@@ -668,120 +663,5 @@ where a.round not in ( select b.race
                        and a.round = b.race)
   and a.season = to_char(trunc(sysdate),'RRRR')
 ;
---------------------------------------------------------
---  DDL for Index F1_SEASONS_RACE_DATES_PK
---------------------------------------------------------
 
-  CREATE UNIQUE INDEX "F1_DATA"."F1_SEASONS_RACE_DATES_PK" ON "F1_DATA"."F1_SEASONS_RACE_DATES" ("SEASONID", "YEAR") 
-  ;
---------------------------------------------------------
---  DDL for Index F1_RACERESULTS_JSON_PK
---------------------------------------------------------
 
-  CREATE UNIQUE INDEX "F1_DATA"."F1_RACERESULTS_JSON_PK" ON "F1_DATA"."F1_RACERESULTS_JSON" ("RESULTID", "YEAR", "ROUND") 
-  ;
---------------------------------------------------------
---  DDL for Index F1_DRIVERSTANDINGS_JSON_PK
---------------------------------------------------------
-
-  CREATE UNIQUE INDEX "F1_DATA"."F1_DRIVERSTANDINGS_JSON_PK" ON "F1_DATA"."F1_DRIVERSTANDINGS_JSON" ("STANDINGID", "YEAR") 
-  ;
---------------------------------------------------------
---  DDL for Index F1_RACE_JSON_PK
---------------------------------------------------------
-
-  CREATE UNIQUE INDEX "F1_DATA"."F1_RACE_JSON_PK" ON "F1_DATA"."F1_RACE_JSON" ("RACID", "YEAR") 
-  ;
---------------------------------------------------------
---  DDL for Index F1_CONSTRUCTORSTANDINGS_JSON_PK
---------------------------------------------------------
-
-  CREATE UNIQUE INDEX "F1_DATA"."F1_CONSTRUCTORSTANDINGS_JSON_PK" ON "F1_DATA"."F1_CONSTRUCTORSTANDINGS_JSON" ("CONSTRUCTORID", "YEAR") 
-  ;
---------------------------------------------------------
---  DDL for Index F1_LAPTIMES_JSON_PK
---------------------------------------------------------
-
-  CREATE UNIQUE INDEX "F1_DATA"."F1_LAPTIMES_JSON_PK" ON "F1_DATA"."F1_LAPTIMES_JSON" ("RESULTID", "YEAR", "ROUND", "LAP") 
-  ;
---------------------------------------------------------
---  Constraints for Table F1_DRIVERSTANDINGS_JSON
---------------------------------------------------------
-
-  ALTER TABLE "F1_DATA"."F1_DRIVERSTANDINGS_JSON" MODIFY ("STANDINGID" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_DRIVERSTANDINGS_JSON" ADD CONSTRAINT "DRIVERSTANDING_ISJSON" CHECK (driverstanding is json) ENABLE;
-  ALTER TABLE "F1_DATA"."F1_DRIVERSTANDINGS_JSON" MODIFY ("YEAR" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_DRIVERSTANDINGS_JSON" ADD CONSTRAINT "F1_DRIVERSTANDINGS_JSON_PK" PRIMARY KEY ("STANDINGID", "YEAR")
-  USING INDEX  ENABLE;
---------------------------------------------------------
---  Constraints for Table F1_RACERESULTS_JSON
---------------------------------------------------------
-
-  ALTER TABLE "F1_DATA"."F1_RACERESULTS_JSON" MODIFY ("RESULTID" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_RACERESULTS_JSON" ADD CONSTRAINT "RESULT_ISJSON" CHECK (result is json) ENABLE;
-  ALTER TABLE "F1_DATA"."F1_RACERESULTS_JSON" MODIFY ("YEAR" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_RACERESULTS_JSON" MODIFY ("ROUND" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_RACERESULTS_JSON" ADD CONSTRAINT "F1_RACERESULTS_JSON_PK" PRIMARY KEY ("RESULTID", "YEAR", "ROUND")
-  USING INDEX  ENABLE;
---------------------------------------------------------
---  Constraints for Table F1_CONSTRUCTORSTANDINGS_JSON
---------------------------------------------------------
-
-  ALTER TABLE "F1_DATA"."F1_CONSTRUCTORSTANDINGS_JSON" MODIFY ("CONSTRUCTORID" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_CONSTRUCTORSTANDINGS_JSON" ADD CONSTRAINT "CONSTRUCTORSTANDING_ISJSON" CHECK (constructorstandings is json) ENABLE;
-  ALTER TABLE "F1_DATA"."F1_CONSTRUCTORSTANDINGS_JSON" MODIFY ("YEAR" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_CONSTRUCTORSTANDINGS_JSON" ADD CONSTRAINT "F1_CONSTRUCTORSTANDINGS_JSON_PK" PRIMARY KEY ("CONSTRUCTORID", "YEAR")
-  USING INDEX  ENABLE;
---------------------------------------------------------
---  Constraints for Table F1_DRIVERS_JSON
---------------------------------------------------------
-
-  ALTER TABLE "F1_DATA"."F1_DRIVERS_JSON" MODIFY ("DRIVERID" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_DRIVERS_JSON" ADD CONSTRAINT "DRIVERS_ISJSON" CHECK (drivers is json) ENABLE;
---------------------------------------------------------
---  Constraints for Table F1_SEASONS_JSON
---------------------------------------------------------
-
-  ALTER TABLE "F1_DATA"."F1_SEASONS_JSON" MODIFY ("SEASONID" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_SEASONS_JSON" ADD CONSTRAINT "SEASON_ISJSON" CHECK (season is json) ENABLE;
---------------------------------------------------------
---  Constraints for Table F1_RACE_JSON
---------------------------------------------------------
-
-  ALTER TABLE "F1_DATA"."F1_RACE_JSON" MODIFY ("RACID" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_RACE_JSON" ADD CONSTRAINT "RACE_ISJSON" CHECK (race is json) ENABLE;
-  ALTER TABLE "F1_DATA"."F1_RACE_JSON" MODIFY ("YEAR" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_RACE_JSON" ADD CONSTRAINT "F1_RACE_JSON_PK" PRIMARY KEY ("RACID", "YEAR")
-  USING INDEX  ENABLE;
---------------------------------------------------------
---  Constraints for Table F1_SEASONS_RACE_DATES
---------------------------------------------------------
-
-  ALTER TABLE "F1_DATA"."F1_SEASONS_RACE_DATES" MODIFY ("SEASONID" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_SEASONS_RACE_DATES" ADD CONSTRAINT "RACEDATE_ISJSON" CHECK (race_date is json) ENABLE;
-  ALTER TABLE "F1_DATA"."F1_SEASONS_RACE_DATES" MODIFY ("YEAR" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_SEASONS_RACE_DATES" ADD CONSTRAINT "F1_SEASONS_RACE_DATES_PK" PRIMARY KEY ("SEASONID", "YEAR")
-  USING INDEX  ENABLE;
---------------------------------------------------------
---  Constraints for Table F1_LAPTIMES_JSON
---------------------------------------------------------
-
-  ALTER TABLE "F1_DATA"."F1_LAPTIMES_JSON" MODIFY ("RESULTID" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_LAPTIMES_JSON" ADD CONSTRAINT "LAPTIME_ISJSON" CHECK (laptimes is json) ENABLE;
-  ALTER TABLE "F1_DATA"."F1_LAPTIMES_JSON" MODIFY ("YEAR" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_LAPTIMES_JSON" MODIFY ("ROUND" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_LAPTIMES_JSON" MODIFY ("LAP" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_LAPTIMES_JSON" ADD CONSTRAINT "F1_LAPTIMES_JSON_PK" PRIMARY KEY ("RESULTID", "YEAR", "ROUND", "LAP")
-  USING INDEX  ENABLE;
---------------------------------------------------------
---  Constraints for Table F1_CONSTRUCTORS_JSON
---------------------------------------------------------
-
-  ALTER TABLE "F1_DATA"."F1_CONSTRUCTORS_JSON" MODIFY ("CONSTRUCTORTID" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_CONSTRUCTORS_JSON" ADD CONSTRAINT "CONSTRUCTOR_ISJSON" CHECK (constructor is json) ENABLE;
---------------------------------------------------------
---  Constraints for Table F1_TRACKS_JSON
---------------------------------------------------------
-
-  ALTER TABLE "F1_DATA"."F1_TRACKS_JSON" MODIFY ("TRACKID" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_TRACKS_JSON" ADD CONSTRAINT "TRACKID_ISJSON" CHECK (tracks is json) ENABLE;
