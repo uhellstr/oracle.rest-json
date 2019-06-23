@@ -1,12 +1,11 @@
-CREATE OR REPLACE package f1_data.f1_init_pkg as 
+create or replace package  f1_data.f1_init_pkg as 
 
   procedure load_json;
 
 end f1_init_pkg;
 /
 
-
-create or replace package body         f1_init_pkg 
+create or replace package body f1_data.f1_init_pkg 
 as
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -33,7 +32,7 @@ as
     ) where rownum < 2;
 
     return lv_retval;
-  
+
   -- Season my have ended
   exception
     when no_data_found then
@@ -138,11 +137,8 @@ as
 
     cursor cur_get_season_year is
     select f1.season
-    from f1_seasons_json ftab,
-         json_table(ftab.season,'$.MRData.SeasonTable.Seasons[*]'
-                   COLUMNS ( season PATH '$.season',
-                             info PATH '$.url')
-                   ) f1;                   
+    from v_f1_season f1;
+    
     --inline
     procedure get_races(
       p_in_year in number,
@@ -474,6 +470,104 @@ as
   end load_f1_seasons_racedates;
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+  procedure load_f1_qualitimes
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  -- Procedure: load_f1_qualitimes (Heavylifter)
+  -- API: Private not published outside body
+  -- Purpose: Fetch all F1 qualitimes historicly from 1994 and forward and store in JSON format
+  -- Author: Ulf Hellstrom, oraminute@gmail.com
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
+  is
+  
+    url clob := 'http://ergast.com/api/f1/{YEAR}/{ROUND}/qualifying.json?limit=1000';
+    calling_url clob;
+    tmp_url clob;
+    lv_number_of_races number;
+    lv_next_round_nr number;
+    
+    cursor cur_get_season_year is
+    select season
+    from v_f1_season
+    where to_number(season) > 1993;  
+    
+    -- inline
+    procedure get_qualitimes
+    (
+        p_in_year in number
+        ,p_in_round in number
+        ,p_in_url clob   
+    ) 
+    is
+    
+      lv_count number;
+      
+    begin
+    
+      -- check if racedates already loaded , if then skip
+      select count(year) into lv_count
+      from f1_qualification_json
+      where year = p_in_year
+        and round = p_in_round;
+        
+     if lv_count = 0 then
+     
+      insert into f1_qualification_json(
+          year
+          ,round
+          ,qualification
+        ) values 
+        ( 
+          p_in_year
+          ,p_in_round
+          ,apex_web_service.make_rest_request
+          (
+              p_url => p_in_url, 
+              p_http_method => 'GET'
+
+           )
+         );
+       commit;     
+     end if;
+     
+    end get_qualitimes;
+    
+  begin
+  
+   for rec in cur_get_season_year loop 
+
+      -- Special handling for current season since not all races are done yeat
+      if rec.season < to_number(to_char(sysdate,'RRRR')) then
+        select max(to_number(round)) into lv_number_of_races
+        from v_f1_races
+        where season = rec.season;
+      else
+        lv_number_of_races := ret_next_race_in_cur_season - 1;
+      end if;  
+
+      if lv_number_of_races > 0 then
+      
+        for i in 1..lv_number_of_races loop
+        
+          -- In current season do not try to load races not yet raced!
+          if rec.season = to_number(to_char(sysdate,'RRRR')) then
+            lv_next_round_nr := ret_next_race_in_cur_season;
+          else
+            lv_next_round_nr := 999;
+          end if;
+          if i < lv_next_round_nr then
+            tmp_url := replace(url,'{YEAR}',rec.season);
+            calling_url := replace(tmp_url,'{ROUND}',i);                  
+            get_qualitimes(rec.season,i,calling_url);
+          end if;
+          
+        end loop; --lv_number_of_races       
+      end if; -- Has the season started yeat? 
+   end loop;         
+  end load_f1_qualitimes;  
+  
+  
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
 
   procedure load_f1_laptimes 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -541,7 +635,7 @@ as
 
       -- Special handling for current season since not all races are done yeat
       if rec.season < to_number(to_char(sysdate,'RRRR')) then
-        select max(round) into lv_number_of_races
+        select max(to_number(round)) into lv_number_of_races
         from v_f1_races
         where season = rec.season;
       else
@@ -549,9 +643,10 @@ as
       end if;  
 
       if lv_number_of_races > 0 then
+      
         for i in 1..lv_number_of_races loop
-  
-          select to_number(laps) 
+
+          select to_number(to_number(laps)) 
           into lv_number_of_laps
           from v_f1_results
           where to_number(position) = 1
@@ -592,6 +687,7 @@ as
     load_f1_driverstandings;
     load_f1_constructorstandings;
     load_f1_seasons_racedates;
+    load_f1_qualitimes;
     load_f1_laptimes;
   end load_json;
 
