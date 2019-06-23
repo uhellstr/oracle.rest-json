@@ -1,4 +1,4 @@
--- Give us all world champions
+-- Give us all world champions in Formula 1!!
 
 select
     d.season,
@@ -25,14 +25,21 @@ from
                     from f1_data.v_f1_driverstandings e
                     where e.season = d.season)
       and d.position = 1
-      and d.season < 2019;
+      and d.season < to_char(trunc(sysdate),'RRRR');
 
 -- Give us the number of championships a champ has got! E.g who is the ultimate champ!
 
-select *
+select driverid,
+       givenname,
+       familyname,
+       nationality,
+       championships_won
 from
 (
 select driverid,
+       givenname,
+       familyname,
+       nationality,
        count(driverid) as championships_won
 from 
 (
@@ -61,8 +68,8 @@ from
                     from f1_data.v_f1_driverstandings e
                     where e.season = d.season)
       and d.position = 1
-      and d.season < 2019
-) group by driverid
+      and d.season < to_char(trunc(sysdate),'RRRR')
+) group by driverid,givenname,familyname,nationality
 ) order by championships_won desc;
 
 --- Show all ME9 Ericssons F1 races during his career --
@@ -116,16 +123,16 @@ from
     f1_data.v_f1_laptimes l
 inner join f1_data.v_f1_races r
 on (r.season = l.season and  r.round = l.round)
-where r.season > 1999
+where r.season > '1999'
   and r.circuitid = 'monza'
   and to_millis(l.laptime) = (select min(to_millis(x.laptime))
                               from f1_data.v_f1_laptimes x
                               inner join f1_data.v_f1_races y
                               on (y.season = x.season and  y.round = x.round)
-                              where y.season > 1999
+                              where y.season > '1999'
                                and y.circuitid = 'monza');
                                
--- List info about swedish drivers in F1 history
+-- List info about swedish drivers in F1 history!
 select * 
 from v_f1_drivers
 where upper(nationality) = 'SWEDISH';
