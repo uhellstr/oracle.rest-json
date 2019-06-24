@@ -138,7 +138,7 @@ as
     cursor cur_get_season_year is
     select f1.season
     from v_f1_season f1;
-    
+
     --inline
     procedure get_races(
       p_in_year in number,
@@ -470,7 +470,7 @@ as
   end load_f1_seasons_racedates;
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  
+
   procedure load_f1_qualitimes
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   -- Procedure: load_f1_qualitimes (Heavylifter)
@@ -479,18 +479,18 @@ as
   -- Author: Ulf Hellstrom, oraminute@gmail.com
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
   is
-  
+
     url clob := 'http://ergast.com/api/f1/{YEAR}/{ROUND}/qualifying.json?limit=1000';
     calling_url clob;
     tmp_url clob;
     lv_number_of_races number;
     lv_next_round_nr number;
-    
+
     cursor cur_get_season_year is
     select season
     from v_f1_season
     where to_number(season) > 1993;  
-    
+
     -- inline
     procedure get_qualitimes
     (
@@ -499,19 +499,19 @@ as
         ,p_in_url clob   
     ) 
     is
-    
+
       lv_count number;
-      
+
     begin
-    
+
       -- check if racedates already loaded , if then skip
       select count(year) into lv_count
       from f1_qualification_json
       where year = p_in_year
         and round = p_in_round;
-        
+
      if lv_count = 0 then
-     
+
       insert into f1_qualification_json(
           year
           ,round
@@ -529,11 +529,11 @@ as
          );
        commit;     
      end if;
-     
+
     end get_qualitimes;
-    
+
   begin
-  
+
    for rec in cur_get_season_year loop 
 
       -- Special handling for current season since not all races are done yeat
@@ -546,9 +546,9 @@ as
       end if;  
 
       if lv_number_of_races > 0 then
-      
+
         for i in 1..lv_number_of_races loop
-        
+
           -- In current season do not try to load races not yet raced!
           if rec.season = to_number(to_char(sysdate,'RRRR')) then
             lv_next_round_nr := ret_next_race_in_cur_season;
@@ -560,13 +560,13 @@ as
             calling_url := replace(tmp_url,'{ROUND}',i);                  
             get_qualitimes(rec.season,i,calling_url);
           end if;
-          
+
         end loop; --lv_number_of_races       
       end if; -- Has the season started yeat? 
    end loop;         
   end load_f1_qualitimes;  
-  
-  
+
+
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
 
   procedure load_f1_laptimes 
@@ -643,35 +643,49 @@ as
       end if;  
 
       if lv_number_of_races > 0 then
-      
+
         for i in 1..lv_number_of_races loop
+          begin
+            select to_number(to_number(laps)) 
+            into lv_number_of_laps
+            from v_f1_results
+            where to_number(position) = 1
+              and to_number(season) = rec.season
+              and to_number(race) = i; 
 
-          select to_number(to_number(laps)) 
-          into lv_number_of_laps
-          from v_f1_results
-          where to_number(position) = 1
-            and to_number(season) = rec.season
-            and to_number(race) = i; 
-
-          for j in 1..lv_number_of_laps loop
-              -- In current season do not try to load races not yet raced!
-              if rec.season = to_number(to_char(sysdate,'RRRR')) then
-                lv_next_round_nr := ret_next_race_in_cur_season;
-              else
-                lv_next_round_nr := 999;
-              end if;
-              if i < lv_next_round_nr then
-                tmp_url := replace(url,'{YEAR}',rec.season);
-                tmp1_url := replace(tmp_url,'{ROUND}',i);      
-                calling_url := replace(tmp1_url,'{LAP}',j);            
-                get_laps(rec.season,i,j,calling_url);
-              end if;
-          end loop;
+            for j in 1..lv_number_of_laps loop
+                -- In current season do not try to load races not yet raced!
+                if rec.season = to_number(to_char(sysdate,'RRRR')) then
+                  lv_next_round_nr := ret_next_race_in_cur_season;
+                else
+                  lv_next_round_nr := 999;
+                end if;
+                if i < lv_next_round_nr then
+                  tmp_url := replace(url,'{YEAR}',rec.season);
+                  tmp1_url := replace(tmp_url,'{ROUND}',i);      
+                  calling_url := replace(tmp1_url,'{LAP}',j);            
+                  get_laps(rec.season,i,j,calling_url);
+                end if;
+            end loop;
+          exception -- special handling if runned same date as race is and no data loaded on ergast.com yet!
+             when no_data_found then
+                delete from f1_raceresults_json
+                where to_number(year) = rec.season
+                  and to_number(round) = i;
+                  commit;
+          end;
         end loop;
       end if; -- Has the season started yeat?
     end loop;
 
   end load_f1_laptimes;
+
+  procedure refresh_mviews 
+  is
+  begin
+    DBMS_SNAPSHOT.REFRESH( '"F1_DATA"."MV_F1_LAP_TIMES"','C');
+    DBMS_SNAPSHOT.REFRESH( '"F1_DATA"."MV_F1_QUALIFICATION_TIMES"','C');
+  end refresh_mviews;
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   -- main published API starts here.
@@ -689,6 +703,7 @@ as
     load_f1_seasons_racedates;
     load_f1_qualitimes;
     load_f1_laptimes;
+    refresh_mviews;
   end load_json;
 
 end f1_init_pkg;
