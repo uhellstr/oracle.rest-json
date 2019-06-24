@@ -19,6 +19,7 @@ end;
 /
 
 
+
 --------------------------------------------------------
 --  DDL for Table F1_CONSTRUCTORS_JSON
 --------------------------------------------------------
@@ -129,24 +130,20 @@ end;
 	"FETCHED_AT" TIMESTAMP (6) DEFAULT systimestamp, 
 	"TRACKS" CLOB
    ) ;
+
+
 --------------------------------------------------------
---  DDL for View V_F1_CONSTRUCTORS
+--  DDL for Index F1_SEASONS_RACE_DATES_PK
 --------------------------------------------------------
 
-  CREATE OR REPLACE FORCE EDITIONABLE VIEW "F1_DATA"."V_F1_CONSTRUCTORS" ("CONSTRUCTORID", "INFO", "NAME", "NATIONALITY") AS 
-  select f1.constructorid
-       ,f1.info
-       ,f1.name
-       ,f1.nationality
-from f1_constructors_json ftab,
-     json_table(ftab.constructor,'$.MRData.ConstructorTable.Constructors[*]'
-                COLUMNS ( constructorId PATH '$.constructorId',
-                          info PATH '$.url',
-                          name PATH '$.name',
-                          nationality PATH '$.nationality'
-                          )
-               ) f1
-;
+  CREATE UNIQUE INDEX "F1_DATA"."F1_SEASONS_RACE_DATES_PK" ON "F1_DATA"."F1_SEASONS_RACE_DATES" ("SEASONID", "YEAR") 
+  ;
+--------------------------------------------------------
+--  DDL for Index MV_F1_LAP_TIMES_INDEX1
+--------------------------------------------------------
+
+  CREATE INDEX "F1_DATA"."MV_F1_LAP_TIMES_INDEX1" ON "F1_DATA"."MV_F1_LAP_TIMES" ("SEASON", "ROUND") 
+  ;
 --------------------------------------------------------
 --  DDL for Index F1_RACERESULTS_JSON_PK
 --------------------------------------------------------
@@ -171,6 +168,7 @@ from f1_constructors_json ftab,
 
   CREATE UNIQUE INDEX "F1_DATA"."F1_RACE_JSON_PK" ON "F1_DATA"."F1_RACE_JSON" ("RACID", "YEAR") 
   ;
+
 --------------------------------------------------------
 --  DDL for Index F1_CONSTRUCTORSTANDINGS_JSON_PK
 --------------------------------------------------------
@@ -202,13 +200,6 @@ from f1_constructors_json ftab,
   ALTER TABLE "F1_DATA"."F1_RACERESULTS_JSON" MODIFY ("ROUND" NOT NULL ENABLE);
   ALTER TABLE "F1_DATA"."F1_RACERESULTS_JSON" ADD CONSTRAINT "F1_RACERESULTS_JSON_PK" PRIMARY KEY ("RESULTID", "YEAR", "ROUND")
   USING INDEX  ENABLE;
-  
---------------------------------------------------------
---  DDL for Index F1_SEASONS_RACE_DATES_PK
---------------------------------------------------------
-
-  CREATE UNIQUE INDEX "F1_DATA"."F1_SEASONS_RACE_DATES_PK" ON "F1_DATA"."F1_SEASONS_RACE_DATES" ("SEASONID", "YEAR") 
-  ;  
 --------------------------------------------------------
 --  Constraints for Table F1_CONSTRUCTORSTANDINGS_JSON
 --------------------------------------------------------
@@ -219,17 +210,17 @@ from f1_constructors_json ftab,
   ALTER TABLE "F1_DATA"."F1_CONSTRUCTORSTANDINGS_JSON" ADD CONSTRAINT "F1_CONSTRUCTORSTANDINGS_JSON_PK" PRIMARY KEY ("CONSTRUCTORID", "YEAR")
   USING INDEX  ENABLE;
 --------------------------------------------------------
---  Constraints for Table F1_DRIVERS_JSON
---------------------------------------------------------
-
-  ALTER TABLE "F1_DATA"."F1_DRIVERS_JSON" MODIFY ("DRIVERID" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_DRIVERS_JSON" ADD CONSTRAINT "DRIVERS_ISJSON" CHECK (drivers is json) ENABLE;
---------------------------------------------------------
 --  Constraints for Table F1_SEASONS_JSON
 --------------------------------------------------------
 
   ALTER TABLE "F1_DATA"."F1_SEASONS_JSON" MODIFY ("SEASONID" NOT NULL ENABLE);
   ALTER TABLE "F1_DATA"."F1_SEASONS_JSON" ADD CONSTRAINT "SEASON_ISJSON" CHECK (season is json) ENABLE;
+--------------------------------------------------------
+--  Constraints for Table F1_DRIVERS_JSON
+--------------------------------------------------------
+
+  ALTER TABLE "F1_DATA"."F1_DRIVERS_JSON" MODIFY ("DRIVERID" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_DRIVERS_JSON" ADD CONSTRAINT "DRIVERS_ISJSON" CHECK (drivers is json) ENABLE;
 --------------------------------------------------------
 --  Constraints for Table F1_RACE_JSON
 --------------------------------------------------------
@@ -266,12 +257,6 @@ from f1_constructors_json ftab,
   ALTER TABLE "F1_DATA"."F1_CONSTRUCTORS_JSON" MODIFY ("CONSTRUCTORTID" NOT NULL ENABLE);
   ALTER TABLE "F1_DATA"."F1_CONSTRUCTORS_JSON" ADD CONSTRAINT "CONSTRUCTOR_ISJSON" CHECK (constructor is json) ENABLE;
 --------------------------------------------------------
---  Constraints for Table F1_TRACKS_JSON
---------------------------------------------------------
-
-  ALTER TABLE "F1_DATA"."F1_TRACKS_JSON" MODIFY ("TRACKID" NOT NULL ENABLE);
-  ALTER TABLE "F1_DATA"."F1_TRACKS_JSON" ADD CONSTRAINT "TRACKID_ISJSON" CHECK (tracks is json) ENABLE;
---------------------------------------------------------
 --  Constraints for Table F1_QUALIFICATION_JSON
 --------------------------------------------------------
 
@@ -281,6 +266,13 @@ from f1_constructors_json ftab,
   ALTER TABLE "F1_DATA"."F1_QUALIFICATION_JSON" MODIFY ("ROUND" NOT NULL ENABLE);
   ALTER TABLE "F1_DATA"."F1_QUALIFICATION_JSON" ADD CONSTRAINT "F1_QUALIFICATION_JSON_PK" PRIMARY KEY ("YEAR", "ROUND", "SEASONID")
   USING INDEX  ENABLE;
+--------------------------------------------------------
+--  Constraints for Table F1_TRACKS_JSON
+--------------------------------------------------------
+
+  ALTER TABLE "F1_DATA"."F1_TRACKS_JSON" MODIFY ("TRACKID" NOT NULL ENABLE);
+  ALTER TABLE "F1_DATA"."F1_TRACKS_JSON" ADD CONSTRAINT "TRACKID_ISJSON" CHECK (tracks is json) ENABLE;
+
   
 --------------------------------------------------------
 --  DDL for View V_F1_CONSTRUCTORSTANDINGS
@@ -664,4 +656,180 @@ where a.round not in ( select b.race
   and a.season = to_char(trunc(sysdate),'RRRR')
 ;
 
+--------------------------------------------------------
+--  DDL for View V_F1_QUALIFICATIONTIMES
+--------------------------------------------------------
 
+
+  CREATE OR REPLACE FORCE EDITIONABLE VIEW "F1_DATA"."V_F1_QUALIFICATIONTIMES" ("SEASON", "ROUND", "RACEINFO", "RACENAME", "CIRCUITID", "CIRCUITURL", "CIRCUITNAME", "RACEDATE", "RACETIME", "DRIVERNUMBER", "POSITION", "DRIVERID", "PERMANENTNUMBER", "CODE", "DRIVERINFO", "GIVENNAME", "FAMILYNAME", "DATEOFBIRTH", "NATIONALITY", "CONSTRUCTOR", "CONSTRUCTORINFO", "CONSTRUCTORNAME", "CONSTRUCTORNATIONALITY", "Q1", "Q2", "Q3") AS 
+  select f1.season,
+        f1.round,
+        f1.raceinfo,
+        f1.raceName,
+        f1.circuitid,
+        f1.circuiturl,
+        f1.circuitName,
+        f1.racedate,
+        f1.racetime,
+        f1.drivernumber,
+        f1.position,
+        f1.driverid,
+        f1.permanentnumber,
+        f1.code,
+        f1.driverinfo,
+        f1.givenName,
+        f1.familyName,
+        f1.dateOfBirth,
+        f1.nationality,
+        f1.Constructor,
+        f1.Constructorinfo,
+        f1.constructorname,
+        f1.constructornationality,
+        f1.q1,
+        f1.q2,
+        f1.q3        
+from f1_qualification_json ftab,
+     json_table(ftab.qualification,'$.MRData.RaceTable.Races[*]'
+                COLUMNS ( season PATH '$.season',
+                          round PATH '$.round',
+                          raceinfo PATH '$.url',
+                          raceName PATH '$.raceName',
+                          nested path '$.Circuit[*]'
+                          COLUMNS
+                           (
+                             circuitid PATH '$.circuitId',
+                             circuiturl PATH '$.url',
+                             circuitName PATH '$.circuitName'
+
+                           ),
+                         racedate PATH '$.date',
+                         racetime PATH '$.time',
+                         nested path '$.QualifyingResults[*]'
+                         COLUMNS
+                          (
+                            drivernumber PATH '$.number',
+                            position PATH '$.position',
+                            driverId PATH '$.Driver.driverId',
+                            permanentnumber PATH '$.Driver.permanentNumber',
+                            code PATH '$.Driver.code',
+                            driverinfo PATH '$.Driver.url',
+                            givenName PATH '$.Driver.givenName',
+                            familyName PATH '$.Driver.familyName',
+                            dateOfBirth PATH '$.Driver.dateOfBirth',
+                            nationality PATH '$.Driver.nationality',
+                            Constructor PATH '$.Constructor.constructorId',
+                            Constructorinfo PATH '$.Constructor.url',
+                            constructorname PATH '$.Constructor.name',
+                            constructornationality PATH '$.Constructor.nationality',
+                            q1 PATH '$.Q1',
+                            q2 PATH '$.Q2',
+                            q3 PATH '$.Q3'
+                          )
+
+                       )
+               ) f1
+order by to_number(f1.season),to_number(f1.round);
+
+--------------------------------------------------------
+--  DDL for Materialized View MV_F1_LAP_TIMES
+--------------------------------------------------------
+
+  CREATE MATERIALIZED VIEW "F1_DATA"."MV_F1_LAP_TIMES" ("SEASON", "ROUND", "INFO", "RACENAME", "CIRCUITID", "URL", "CIRCUITNAME", "RACE_DATE", "RACE_TIME", "LAP", "DRIVERID", "POSITION", "LAPTIME", "LAPTIMES_MILLIS")
+  SEGMENT CREATION IMMEDIATE
+  ORGANIZATION HEAP PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 
+ NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS" 
+  BUILD IMMEDIATE
+  USING INDEX 
+  REFRESH FORCE ON DEMAND
+  USING DEFAULT LOCAL ROLLBACK SEGMENT
+  USING ENFORCED CONSTRAINTS DISABLE ON QUERY COMPUTATION DISABLE QUERY REWRITE
+  AS select 
+    to_number(l.season) as season,
+    to_number(l.round) as round,
+    l.info,
+    l.racename,
+    r.circuitid,
+    l.url,
+    r.circuitname,
+    l.race_date,
+    l.race_time,
+    to_number(l.lap_number) as lap,
+    l.driverid,
+    l.position,
+    l.laptime,
+    to_millis(l.laptime) as laptimes_millis
+from
+    f1_data.v_f1_laptimes l
+inner join f1_data.v_f1_races r
+on (r.season = l.season and  r.round = l.round);
+
+  CREATE INDEX "F1_DATA"."MV_F1_LAP_TIMES_INDEX1" ON "F1_DATA"."MV_F1_LAP_TIMES" ("SEASON", "ROUND") 
+  ;
+
+   COMMENT ON MATERIALIZED VIEW "F1_DATA"."MV_F1_LAP_TIMES"  IS 'snapshot table for snapshot F1_DATA.MV_F1_LAP_TIMES';
+--------------------------------------------------------
+--  DDL for Materialized View MV_F1_QUALIFICATION_TIMES
+--------------------------------------------------------
+
+  CREATE MATERIALIZED VIEW "F1_DATA"."MV_F1_QUALIFICATION_TIMES" ("SEASON", "ROUND", "INFO", "RACENAME", "CIRCUITID", "URL", "CIRCUITNAME", "LOCALITY", "COUNTRY", "RACEDATE", "RACETIME", "DRIVERNUMBER", "POSITION", "DRIVERID", "PERMANENTNUMBER", "CODE", "DRIVERINFO", "GIVENNAME", "FAMILYNAME", "DATEOFBIRTH", "NATIONALITY", "CONSTRUCTOR", "CONSTRUCTORINFO", "CONSTRUCTORNAME", "CONSTRUCTORNATIONALITY", "Q1", "Q1_MILLIS", "Q2", "Q2_MILLIS", "Q3", "Q3_MILLIS")
+  SEGMENT CREATION IMMEDIATE
+  ORGANIZATION HEAP PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 
+ NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS" 
+  BUILD IMMEDIATE
+  USING INDEX 
+  REFRESH FORCE ON DEMAND
+  USING DEFAULT LOCAL ROLLBACK SEGMENT
+  USING ENFORCED CONSTRAINTS DISABLE ON QUERY COMPUTATION DISABLE QUERY REWRITE
+  AS select
+  to_number(q.season) as season,
+  to_number(q.round) as round,
+  r.info,
+  r.racename,
+  r.circuitid,
+  r.url,
+  r.circuitname,
+  r.locality,
+  r.country,
+  q.racedate,
+  q.racetime,
+  q.drivernumber,
+  q.position,
+  q.driverid,
+  q.permanentnumber,
+  q.code,
+  q.driverinfo,
+  q.givenname,
+  q.familyname,
+  q.dateofbirth,
+  q.nationality,
+  q.constructor,
+  q.constructorinfo,
+  q.constructorname,
+  q.constructornationality,
+  q.q1,
+  to_millis(q.q1) as q1_millis,
+  q.q2,
+  to_millis(q.q2) as q2_millis,
+  q.q3,
+  to_millis(q.q3) as q3_millis
+from
+  v_f1_qualificationtimes q
+inner join v_f1_races r
+on q.season = r.season and q.round = r.round;
+  
+--------------------------------------------------------
+--  DDL for Index MV_F1_QUALIFICATION_TIMES_INDEX1
+--------------------------------------------------------
+
+  CREATE INDEX "F1_DATA"."MV_F1_QUALIFICATION_TIMES_INDEX1" ON "F1_DATA"."MV_F1_QUALIFICATION_TIMES" ("SEASON", "ROUND") 
+  ;  
+
+   COMMENT ON MATERIALIZED VIEW "F1_DATA"."MV_F1_QUALIFICATION_TIMES"  IS 'snapshot table for snapshot F1_DATA.MV_F1_QUALIFICATION_TIMES';
