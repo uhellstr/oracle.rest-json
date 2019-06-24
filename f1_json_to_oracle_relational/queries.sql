@@ -103,6 +103,7 @@ where locality = 'Monza'
 order by to_number(season),to_number(race);
 
 -- What is the fastest laptime set on Monza on the current layout on the track from 2000 and forward ?
+-- Here we query the json data directly (e.g we parse the json data and do the join) quite timeconsuming.
 
 select 
     l.season,
@@ -131,11 +132,37 @@ where r.season > '1999'
                               on (y.season = x.season and  y.round = x.round)
                               where y.season > '1999'
                                and y.circuitid = 'monza');
+                              
+-- The same query but now we use the MV view instead !!
+select 
+    l.season,
+    l.round,
+    l.info,
+    l.racename,
+    l.circuitid,
+    l.url,
+    l.circuitname,
+    l.race_date,
+    l.race_time,
+    l.lap,
+    l.driverid,
+    l.position,
+    l.laptime,
+    l.laptimes_millis
+from
+    f1_data.mv_f1_lap_times l
+where l.season > 1999
+  and l.circuitid = 'monza'
+  and l.laptimes_millis = (select min(x.laptimes_millis)
+                              from f1_data.mv_f1_lap_times x
+                              where x.season > 1999
+                               and x.circuitid = 'monza');
                                
 -- List info about swedish drivers in F1 history!
 select * 
 from v_f1_drivers
-where upper(nationality) = 'SWEDISH';
+where upper(nationality) = 'SWEDISH'
+order by to_date(dateofbirth,'YYYY-MM-DD') desc;
 
 -- List all races ME9 Ericsson scored points during his F1 time.
 select eri.season,
@@ -167,10 +194,10 @@ where eri.driverid = 'ericsson'
   
 
 -- How man points did Alonso score during his F1 career
-select sum(eri.points) as totalcareerpoints
-from v_f1_results eri
-where eri.driverid = 'alonso'
-  and eri.points > 0;
+select sum(alo.points) as totalcareerpoints
+from v_f1_results alo
+where alo.driverid = 'alonso'
+  and alo.points > 0;
   
 -- Get the median position for ME9 Ericsson during his F1 career
 
@@ -308,6 +335,91 @@ where r.season = to_char(trunc(sysdate),'RRRR')
   and r.position < 11
 order by to_number(r.position) asc;
 
+-- Give us the qualification times from 1994 and forward (Full data from 2002 ca)
+
+select
+  q.season,
+  q.round,
+  r.info,
+  r.racename,
+  r.circuitid,
+  r.url,
+  r.circuitname,
+  r.locality,
+  r.country,
+  q.racedate,
+  q.racetime,
+  q.drivernumber,
+  q.position,
+  q.driverid,
+  q.permanentnumber,
+  q.code,
+  q.driverinfo,
+  q.givenname,
+  q.familyname,
+  q.dateofbirth,
+  q.nationality,
+  q.constructor,
+  q.constructorinfo,
+  q.constructorname,
+  q.constructornationality,
+  q.q1,
+  q.q2,
+  q.q3
+from
+  v_f1_qualificationtimes q
+inner join v_f1_races r
+on q.season = r.season and q.round = r.round;
+
+-- Give us the number of poles different drivers has achived broken down per season
+select *
+from
+(
+select q.season
+       ,q.driverid
+       ,q.drivernumber
+       ,q.givenname
+       ,q.familyname
+       ,q.constructorname
+       ,count(position) as number_of_poles
+from mv_f1_qualification_times q
+where q.position = 1
+group by q.season
+       ,q.driverid
+       ,q.drivernumber
+       ,q.givenname
+       ,q.familyname
+       ,q.constructorname
+) order by season desc,
+           number_of_poles desc;
+           
+-- Who outqualifed who in mercedes in the 2018 season ?
+select season
+       ,drivernumber
+       ,givenname
+       ,familyname
+       ,constructorname
+       ,count(internal_position) as outqualify_teammate
+from
+(
+select q.season
+       ,q.round
+       ,q.driverid
+       ,q.drivernumber
+       ,q.givenname
+       ,q.familyname
+       ,q.constructorname
+       ,q.position
+       ,rank() over (partition by q.season,q.round,q.constructorname order by to_number(position)) as internal_position
+from mv_f1_qualification_times q
+where q.constructor = 'mercedes'
+  and q.season = 2018
+) where internal_position = 1
+group by season
+       ,drivernumber
+       ,givenname
+       ,familyname
+       ,constructorname;
 
 ---- Try to parse  and Get race date from wikipedia for a race not yet in the database
 --
