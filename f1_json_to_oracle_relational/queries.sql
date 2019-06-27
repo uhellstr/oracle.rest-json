@@ -393,7 +393,10 @@ group by q.season
 ) order by season desc,
            number_of_poles desc;
            
--- Who outqualifed who in mercedes in the 2018 season ?
+-- Who outqualifed who in the 2018 season ?
+select *
+from
+(
 select season
        ,drivernumber
        ,givenname
@@ -412,14 +415,67 @@ select q.season
        ,q.position
        ,rank() over (partition by q.season,q.round,q.constructorname order by to_number(position)) as internal_position
 from mv_f1_qualification_times q
-where q.constructor = 'mercedes'
+where q.constructor = (select distinct(q1.constructor)
+                       from mv_f1_qualification_times q1
+                       where q1.season = 2018
+                         and q1.constructor = q.constructor)
   and q.season = 2018
 ) where internal_position = 1
 group by season
        ,drivernumber
        ,givenname
        ,familyname
-       ,constructorname;
+       ,constructorname
+) order by season,constructorname,outqualify_teammate;
+
+-- Get the starting grid for the latest race in current season
+
+select
+  season,
+  round,
+
+  circuitname,
+  locality,
+  country,
+  racedate,
+  drivernumber,
+  permanentnumber,
+  code,
+  givenname,
+  familyname, 
+  nationality,
+  constructor,
+  constructornationality,
+  case 
+  when q3 is not null and q2 is not null and q1 is not null then
+    'Q3'
+  when q3 is null and q2 is not null and q1 is not null then 
+    'Q2'
+  when q3 is null and q2 is null and q1 is not null then
+    'Q1'
+  else
+    null
+  end as qualification,  
+  case 
+  when q3 is not null and q2 is not null and q1 is not null then
+    q3
+  when q3 is null and q2 is not null and q1 is not null then 
+    q2
+  when q3 is null and q2 is null and q1 is not null then
+    q1
+  else
+    null
+  end as qualification_time,
+  to_number(position) as starting_grid
+from
+  mv_f1_qualification_times
+where to_number(season) = to_number(to_char(trunc(sysdate),'RRRR'))
+  and position is not null
+  and to_number(round) = (select min(to_number(round))-1
+                          from v_f1_upcoming_races
+                          where to_number(season) = to_number(to_char(trunc(sysdate),'RRRR'))
+                            and to_date(race_date,'RRRR-MM-DD') >= trunc(sysdate))
+order by to_number(position) asc;
 
 ---- Try to parse  and Get race date from wikipedia for a race not yet in the database
 --
