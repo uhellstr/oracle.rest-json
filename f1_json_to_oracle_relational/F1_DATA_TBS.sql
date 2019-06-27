@@ -273,7 +273,20 @@ end;
   ALTER TABLE "F1_DATA"."F1_TRACKS_JSON" MODIFY ("TRACKID" NOT NULL ENABLE);
   ALTER TABLE "F1_DATA"."F1_TRACKS_JSON" ADD CONSTRAINT "TRACKID_ISJSON" CHECK (tracks is json) ENABLE;
 
-  
+
+create or replace view v_f1_constructors as
+select f1.constructorid
+       ,f1.info
+       ,f1.name
+       ,f1.nationality
+from f1_constructors_json ftab,
+     json_table(ftab.constructor,'$.MRData.ConstructorTable.Constructors[*]'
+                COLUMNS ( constructorId PATH '$.constructorId',
+                          info PATH '$.url',
+                          name PATH '$.name',
+                          nationality PATH '$.nationality'
+                          )
+               ) f1;  
 --------------------------------------------------------
 --  DDL for View V_F1_CONSTRUCTORSTANDINGS
 --------------------------------------------------------
