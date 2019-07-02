@@ -27,7 +27,7 @@ prompt APPLICATION 100 - FORMULA1
 -- Application Export:
 --   Application:     100
 --   Name:            FORMULA1
---   Date and Time:   22:52 Saturday June 29, 2019
+--   Date and Time:   14:06 Tuesday July 2, 2019
 --   Exported By:     UHELLSTR
 --   Flashback:       0
 --   Export Type:     Application Export
@@ -36,13 +36,13 @@ prompt APPLICATION 100 - FORMULA1
 --
 
 -- Application Statistics:
---   Pages:                     17
---     Items:                   23
+--   Pages:                     18
+--     Items:                   27
 --     Validations:              1
 --     Processes:               10
---     Regions:                 37
---     Buttons:                 17
---     Dynamic Actions:          8
+--     Regions:                 41
+--     Buttons:                 18
+--     Dynamic Actions:          9
 --   Shared Components:
 --     Logic:
 --       App Settings:           1
@@ -115,7 +115,7 @@ wwv_flow_api.create_flow(
 ,p_substitution_string_01=>'APP_NAME'
 ,p_substitution_value_01=>'FORMULA1'
 ,p_last_updated_by=>'UHELLSTR'
-,p_last_upd_yyyymmddhh24miss=>'20190629224829'
+,p_last_upd_yyyymmddhh24miss=>'20190702140333'
 ,p_file_prefix => nvl(wwv_flow_application_install.get_static_app_file_prefix,'')
 ,p_files_version=>3
 ,p_ui_type_name => null
@@ -11066,7 +11066,7 @@ wwv_flow_api.create_page(
 ,p_autocomplete_on_off=>'OFF'
 ,p_page_template_options=>'#DEFAULT#'
 ,p_last_updated_by=>'UHELLSTR'
-,p_last_upd_yyyymmddhh24miss=>'20190629223748'
+,p_last_upd_yyyymmddhh24miss=>'20190702133059'
 );
 wwv_flow_api.create_report_region(
  p_id=>wwv_flow_api.id(1466603079539063)
@@ -11088,11 +11088,12 @@ wwv_flow_api.create_report_region(
 '  CIRCUITNAME CARD_TITLE,',
 '  COUNTRY CARD_TEXT,',
 '  CIRCUITID CARD_SUBTEXT',
-'from  R_F1_TRACKS'))
+'from  R_F1_TRACKS',
+'order by circuitname'))
 ,p_ajax_enabled=>'Y'
 ,p_query_row_template=>wwv_flow_api.id(1390923757538859)
 ,p_query_num_rows=>500
-,p_query_options=>'N'
+,p_query_options=>'DERIVED_REPORT_COLUMNS'
 ,p_query_no_data_found=>'no data found'
 ,p_query_num_rows_type=>'NEXT_PREVIOUS_LINKS'
 ,p_query_row_count_max=>500
@@ -11192,7 +11193,7 @@ wwv_flow_api.create_page(
 ,p_autocomplete_on_off=>'OFF'
 ,p_page_template_options=>'#DEFAULT#'
 ,p_last_updated_by=>'UHELLSTR'
-,p_last_upd_yyyymmddhh24miss=>'20190629224829'
+,p_last_upd_yyyymmddhh24miss=>'20190702135957'
 );
 wwv_flow_api.create_page_plug(
  p_id=>wwv_flow_api.id(1590494375555052)
@@ -11207,8 +11208,7 @@ wwv_flow_api.create_page_plug(
 '       LOCALITY,',
 '       COUNTRY,',
 '       INFO,',
-'       LAT,',
-'       LONGITUD',
+'       LAT||'',''||LONGITUD as POSITION',
 '  from R_F1_TRACKS',
 'where circuitid = :P3_CIRCUITID'))
 ,p_plug_source_type=>'NATIVE_IG'
@@ -11328,13 +11328,11 @@ wwv_flow_api.create_region_column(
 ,p_heading_alignment=>'LEFT'
 ,p_display_sequence=>50
 ,p_value_alignment=>'LEFT'
-,p_attribute_01=>'N'
-,p_attribute_02=>'N'
-,p_attribute_03=>'N'
-,p_attribute_04=>'TEXT'
 ,p_attribute_05=>'BOTH'
+,p_item_icon_css_classes=>'fa-link'
 ,p_is_required=>false
-,p_max_length=>4000
+,p_link_target=>'&INFO.'
+,p_link_text=>'<img src="#IMAGE_PREFIX#app_ui/img/icons/apex-edit-view.png" class="apex-edit-view" alt="">'
 ,p_enable_filter=>true
 ,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
 ,p_filter_is_required=>false
@@ -11348,13 +11346,16 @@ wwv_flow_api.create_region_column(
 ,p_enable_pivot=>false
 ,p_is_primary_key=>false
 ,p_duplicate_value=>true
-,p_include_in_export=>true
+,p_include_in_export=>false
+,p_help_text=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'Get detail info from Wikipedia',
+'Use Ctrl Click to open link in new tab.'))
 );
 wwv_flow_api.create_region_column(
- p_id=>wwv_flow_api.id(1594619998555070)
-,p_name=>'LAT'
+ p_id=>wwv_flow_api.id(1965010225781905)
+,p_name=>'POSITION'
 ,p_source_type=>'DB_COLUMN'
-,p_source_expression=>'LAT'
+,p_source_expression=>'POSITION'
 ,p_data_type=>'VARCHAR2'
 ,p_is_query_only=>false
 ,p_item_type=>'NATIVE_HIDDEN'
@@ -11364,26 +11365,6 @@ wwv_flow_api.create_region_column(
 ,p_use_as_row_header=>false
 ,p_enable_sort_group=>true
 ,p_enable_control_break=>true
-,p_enable_pivot=>false
-,p_is_primary_key=>false
-,p_duplicate_value=>true
-,p_include_in_export=>false
-);
-wwv_flow_api.create_region_column(
- p_id=>wwv_flow_api.id(1595215993555071)
-,p_name=>'LONGITUD'
-,p_source_type=>'DB_COLUMN'
-,p_source_expression=>'LONGITUD'
-,p_data_type=>'VARCHAR2'
-,p_is_query_only=>false
-,p_item_type=>'NATIVE_HIDDEN'
-,p_display_sequence=>70
-,p_attribute_01=>'Y'
-,p_filter_is_required=>false
-,p_use_as_row_header=>false
-,p_enable_sort_group=>true
-,p_enable_control_break=>true
-,p_enable_pivot=>false
 ,p_is_primary_key=>false
 ,p_duplicate_value=>true
 ,p_include_in_export=>false
@@ -11427,6 +11408,14 @@ wwv_flow_api.create_ig_report_view(
 ,p_edit_mode=>false
 );
 wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(1301446842802709)
+,p_view_id=>wwv_flow_api.id(1591485165555059)
+,p_display_seq=>8
+,p_column_id=>wwv_flow_api.id(1965010225781905)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
  p_id=>wwv_flow_api.id(1592672520555069)
 ,p_view_id=>wwv_flow_api.id(1591485165555059)
 ,p_display_seq=>2
@@ -11458,39 +11447,738 @@ wwv_flow_api.create_ig_report_column(
 ,p_is_visible=>true
 ,p_is_frozen=>false
 );
-wwv_flow_api.create_ig_report_column(
- p_id=>wwv_flow_api.id(1595080283555071)
-,p_view_id=>wwv_flow_api.id(1591485165555059)
-,p_display_seq=>6
-,p_column_id=>wwv_flow_api.id(1594619998555070)
-,p_is_visible=>true
-,p_is_frozen=>false
-);
-wwv_flow_api.create_ig_report_column(
- p_id=>wwv_flow_api.id(1595642074555071)
-,p_view_id=>wwv_flow_api.id(1591485165555059)
-,p_display_seq=>7
-,p_column_id=>wwv_flow_api.id(1595215993555071)
-,p_is_visible=>true
-,p_is_frozen=>false
-);
 wwv_flow_api.create_page_plug(
  p_id=>wwv_flow_api.id(1595947586558502)
 ,p_plug_name=>'Track Map'
+,p_region_name=>'map'
 ,p_parent_plug_id=>wwv_flow_api.id(1590494375555052)
 ,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
 ,p_plug_template=>wwv_flow_api.id(1375037481538848)
-,p_plug_display_sequence=>10
+,p_plug_display_sequence=>40
 ,p_plug_display_point=>'BODY'
 ,p_plug_source_type=>'PLUGIN_COM.JK64.SIMPLE_GOOGLE_MAP'
 ,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
 ,p_attribute_01=>'0,0'
 ,p_attribute_02=>'1'
 ,p_attribute_03=>'400'
+,p_attribute_04=>'P3_LAT_LONG'
 ,p_attribute_05=>'16'
 ,p_attribute_07=>'N'
 ,p_attribute_12=>'N'
+,p_attribute_14=>':P3_LAT_LONG IS NOT NULL'
 ,p_attribute_17=>'auto'
+);
+wwv_flow_api.create_report_region(
+ p_id=>wwv_flow_api.id(1596318638558506)
+,p_name=>'Fastest lap time (Data from 1996)'
+,p_parent_plug_id=>wwv_flow_api.id(1590494375555052)
+,p_template=>wwv_flow_api.id(1375037481538848)
+,p_display_sequence=>10
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_component_template_options=>'#DEFAULT#:t-Report--altRowsDefault:t-Report--rowHighlight'
+,p_display_point=>'BODY'
+,p_source_type=>'NATIVE_SQL_REPORT'
+,p_query_type=>'SQL'
+,p_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select ',
+'    l.season,',
+'    l.round as race,',
+'    l.race_date,',
+'    l.lap,',
+'    l.driverid,',
+'    l.position,',
+'    l.laptime',
+'from r_mv_f1_lap_times l',
+'where l.circuitid = :P3_CIRCUITID',
+'  and l.laptimes_millis = (select min(x.laptimes_millis)',
+'                              from r_mv_f1_lap_times x',
+'                               where x.circuitid = :P3_CIRCUITID)'))
+,p_ajax_enabled=>'Y'
+,p_query_row_template=>wwv_flow_api.id(1400779506538865)
+,p_query_num_rows=>15
+,p_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_query_show_nulls_as=>'-'
+,p_query_num_rows_type=>'NEXT_PREVIOUS_LINKS'
+,p_pagination_display_position=>'BOTTOM_RIGHT'
+,p_csv_output=>'N'
+,p_prn_output=>'N'
+,p_sort_null=>'L'
+,p_plug_query_strip_html=>'N'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1596438207558507)
+,p_query_column_id=>1
+,p_column_alias=>'SEASON'
+,p_column_display_sequence=>1
+,p_column_heading=>'Season'
+,p_use_as_row_header=>'N'
+,p_disable_sort_column=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1596545660558508)
+,p_query_column_id=>2
+,p_column_alias=>'RACE'
+,p_column_display_sequence=>2
+,p_column_heading=>'Race'
+,p_use_as_row_header=>'N'
+,p_disable_sort_column=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1596777869558510)
+,p_query_column_id=>3
+,p_column_alias=>'RACE_DATE'
+,p_column_display_sequence=>3
+,p_column_heading=>'Race Date'
+,p_use_as_row_header=>'N'
+,p_disable_sort_column=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1596990540558512)
+,p_query_column_id=>4
+,p_column_alias=>'LAP'
+,p_column_display_sequence=>4
+,p_column_heading=>'Lap'
+,p_use_as_row_header=>'N'
+,p_disable_sort_column=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1597026691558513)
+,p_query_column_id=>5
+,p_column_alias=>'DRIVERID'
+,p_column_display_sequence=>5
+,p_column_heading=>'Driverid'
+,p_use_as_row_header=>'N'
+,p_disable_sort_column=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1597194890558514)
+,p_query_column_id=>6
+,p_column_alias=>'POSITION'
+,p_column_display_sequence=>6
+,p_column_heading=>'Position'
+,p_use_as_row_header=>'N'
+,p_disable_sort_column=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1597274362558515)
+,p_query_column_id=>7
+,p_column_alias=>'LAPTIME'
+,p_column_display_sequence=>7
+,p_column_heading=>'Laptime'
+,p_use_as_row_header=>'N'
+,p_disable_sort_column=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_region(
+ p_id=>wwv_flow_api.id(1597474316558517)
+,p_name=>'Fastest qualification Time'
+,p_parent_plug_id=>wwv_flow_api.id(1590494375555052)
+,p_template=>wwv_flow_api.id(1375037481538848)
+,p_display_sequence=>20
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_component_template_options=>'#DEFAULT#:t-Report--altRowsDefault:t-Report--rowHighlight'
+,p_new_grid_row=>false
+,p_new_grid_column=>false
+,p_display_point=>'BODY'
+,p_source_type=>'NATIVE_SQL_REPORT'
+,p_query_type=>'SQL'
+,p_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select season,',
+'       round,',
+'       racedate,',
+'       position,',
+'       driverid,',
+'       constructor,',
+'       qualification_time',
+'from',
+'(',
+'select',
+'  qu.season,',
+'  qu.round,',
+'  qu.racedate,',
+'  qu.drivernumber,',
+'  qu.position,',
+'  qu.driverid,',
+'  qu.permanentnumber,',
+'  qu.code,',
+'  qu.constructor,',
+'  case',
+'    when q3 is not null and q2 is not null and q1 is not null then',
+'      q3',
+'    when q3 is null and q2 is not null and q1 is not null then ',
+'      q2',
+'    when q3 is null and q2 is null and q1 is not null then',
+'      q1',
+'    else',
+'      null',
+'  end as qualification_time,  ',
+'  case ',
+'    when q3 is not null and q2 is not null and q1 is not null then',
+'      to_number(qu.q3_millis)',
+'    when q3 is null and q2 is not null and q1 is not null then ',
+'      to_number(qu.q2_millis)',
+'    when q3 is null and q2 is null and q1 is not null then',
+'      to_number(qu.q1_millis)',
+'    else null',
+'  end as millis ',
+'from',
+'  r_mv_f1_qualification_times qu',
+'where to_number(qu.position) = 1',
+'  and qu.circuitid = :P3_CIRCUITID',
+') where millis = (select min(',
+'                             case ',
+'                               when q3 is not null and q2 is not null and q1 is not null then',
+'                                 to_number(qa.q3_millis)',
+'                               when q3 is null and q2 is not null and q1 is not null then ',
+'                                 to_number(qa.q2_millis)',
+'                               when q3 is null and q2 is null and q1 is not null then',
+'                                 to_number(qa.q1_millis)',
+'                               else 9999999',
+'                              end',
+'                              )',
+'                  from r_mv_f1_qualification_times qa',
+'                  where qa.circuitid = :P3_CIRCUITID',
+'                    and to_number(qa.position) = 1);'))
+,p_ajax_enabled=>'Y'
+,p_query_row_template=>wwv_flow_api.id(1400779506538865)
+,p_query_num_rows=>15
+,p_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_query_show_nulls_as=>'-'
+,p_query_num_rows_type=>'NEXT_PREVIOUS_LINKS'
+,p_pagination_display_position=>'BOTTOM_RIGHT'
+,p_csv_output=>'N'
+,p_prn_output=>'N'
+,p_sort_null=>'L'
+,p_plug_query_strip_html=>'N'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1597516407558518)
+,p_query_column_id=>1
+,p_column_alias=>'SEASON'
+,p_column_display_sequence=>1
+,p_column_heading=>'Season'
+,p_use_as_row_header=>'N'
+,p_disable_sort_column=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1597629506558519)
+,p_query_column_id=>2
+,p_column_alias=>'ROUND'
+,p_column_display_sequence=>2
+,p_column_heading=>'Round'
+,p_use_as_row_header=>'N'
+,p_disable_sort_column=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1597728594558520)
+,p_query_column_id=>3
+,p_column_alias=>'RACEDATE'
+,p_column_display_sequence=>3
+,p_column_heading=>'Racedate'
+,p_use_as_row_header=>'N'
+,p_disable_sort_column=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1597959925558522)
+,p_query_column_id=>4
+,p_column_alias=>'POSITION'
+,p_column_display_sequence=>4
+,p_column_heading=>'Position'
+,p_use_as_row_header=>'N'
+,p_disable_sort_column=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1598051214558523)
+,p_query_column_id=>5
+,p_column_alias=>'DRIVERID'
+,p_column_display_sequence=>5
+,p_column_heading=>'Driverid'
+,p_use_as_row_header=>'N'
+,p_disable_sort_column=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1598142840558524)
+,p_query_column_id=>6
+,p_column_alias=>'CONSTRUCTOR'
+,p_column_display_sequence=>6
+,p_column_heading=>'Constructor'
+,p_use_as_row_header=>'N'
+,p_disable_sort_column=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1598208144558525)
+,p_query_column_id=>7
+,p_column_alias=>'QUALIFICATION_TIME'
+,p_column_display_sequence=>7
+,p_column_heading=>'Qualification Time'
+,p_use_as_row_header=>'N'
+,p_disable_sort_column=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(1598300197558526)
+,p_plug_name=>'Historic Race Wins'
+,p_parent_plug_id=>wwv_flow_api.id(1590494375555052)
+,p_region_template_options=>'#DEFAULT#'
+,p_component_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(1373977221538848)
+,p_plug_display_sequence=>30
+,p_plug_display_point=>'BODY'
+,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select',
+'  to_number(ra.season) as season,',
+'  to_number(ra.round) as race,',
+'  ra.circuitname,',
+'  ra.locality,',
+'  ra.country,',
+'  re.racedate,',
+'  re.pilotnr,',
+'  re.givenname,',
+'  re.familyname,',
+'  re.nationality',
+'from',
+'  r_f1_races ra',
+'inner join r_mv_f1_results re',
+'on ra.season = re.season and ra.round = re.race',
+'where ra.circuitid = :P3_CIRCUITID',
+'  and to_number(re.position) = 1'))
+,p_plug_source_type=>'NATIVE_IG'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(1598503155558528)
+,p_name=>'SEASON'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'SEASON'
+,p_data_type=>'NUMBER'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_NUMBER_FIELD'
+,p_heading=>'Season'
+,p_heading_alignment=>'RIGHT'
+,p_display_sequence=>10
+,p_value_alignment=>'RIGHT'
+,p_attribute_03=>'right'
+,p_is_required=>false
+,p_enable_filter=>true
+,p_filter_is_required=>false
+,p_filter_lov_type=>'NONE'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(1598613113558529)
+,p_name=>'RACE'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'RACE'
+,p_data_type=>'NUMBER'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_LINK'
+,p_heading=>'Race'
+,p_heading_alignment=>'RIGHT'
+,p_display_sequence=>20
+,p_value_alignment=>'RIGHT'
+,p_link_target=>'f?p=&APP_ID.:4:&SESSION.::&DEBUG.:RP:P4_SEASON,P4_RACE:&SEASON.,&RACE.'
+,p_link_text=>'<img src="#IMAGE_PREFIX#app_ui/img/icons/apex-edit-view.png" class="apex-edit-view" alt="">'
+,p_enable_filter=>true
+,p_filter_is_required=>false
+,p_filter_lov_type=>'NONE'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+,p_escape_on_http_output=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(1598796568558530)
+,p_name=>'CIRCUITNAME'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'CIRCUITNAME'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_TEXT_FIELD'
+,p_heading=>'Circuitname'
+,p_heading_alignment=>'LEFT'
+,p_display_sequence=>30
+,p_value_alignment=>'LEFT'
+,p_attribute_05=>'BOTH'
+,p_is_required=>false
+,p_max_length=>4000
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'DISTINCT'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(1598829798558531)
+,p_name=>'LOCALITY'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'LOCALITY'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_TEXT_FIELD'
+,p_heading=>'Locality'
+,p_heading_alignment=>'LEFT'
+,p_display_sequence=>40
+,p_value_alignment=>'LEFT'
+,p_attribute_05=>'BOTH'
+,p_is_required=>false
+,p_max_length=>4000
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'DISTINCT'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(1598921634558532)
+,p_name=>'COUNTRY'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'COUNTRY'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_TEXT_FIELD'
+,p_heading=>'Country'
+,p_heading_alignment=>'LEFT'
+,p_display_sequence=>50
+,p_value_alignment=>'LEFT'
+,p_attribute_05=>'BOTH'
+,p_is_required=>false
+,p_max_length=>4000
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'DISTINCT'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(1599094053558533)
+,p_name=>'RACEDATE'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'RACEDATE'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_TEXT_FIELD'
+,p_heading=>'Racedate'
+,p_heading_alignment=>'LEFT'
+,p_display_sequence=>60
+,p_value_alignment=>'LEFT'
+,p_attribute_05=>'BOTH'
+,p_is_required=>false
+,p_max_length=>4000
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'DISTINCT'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(1599178111558534)
+,p_name=>'PILOTNR'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'PILOTNR'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_TEXT_FIELD'
+,p_heading=>'Pilotnr'
+,p_heading_alignment=>'LEFT'
+,p_display_sequence=>70
+,p_value_alignment=>'LEFT'
+,p_attribute_05=>'BOTH'
+,p_is_required=>false
+,p_max_length=>4000
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'DISTINCT'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(1599275332558535)
+,p_name=>'GIVENNAME'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'GIVENNAME'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_TEXT_FIELD'
+,p_heading=>'Givenname'
+,p_heading_alignment=>'LEFT'
+,p_display_sequence=>80
+,p_value_alignment=>'LEFT'
+,p_attribute_05=>'BOTH'
+,p_is_required=>false
+,p_max_length=>4000
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'DISTINCT'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(1599321750558536)
+,p_name=>'FAMILYNAME'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'FAMILYNAME'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_TEXT_FIELD'
+,p_heading=>'Familyname'
+,p_heading_alignment=>'LEFT'
+,p_display_sequence=>90
+,p_value_alignment=>'LEFT'
+,p_attribute_05=>'BOTH'
+,p_is_required=>false
+,p_max_length=>4000
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'DISTINCT'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(1599473224558537)
+,p_name=>'NATIONALITY'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'NATIONALITY'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_TEXT_FIELD'
+,p_heading=>'Nationality'
+,p_heading_alignment=>'LEFT'
+,p_display_sequence=>100
+,p_value_alignment=>'LEFT'
+,p_attribute_05=>'BOTH'
+,p_is_required=>false
+,p_max_length=>4000
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'DISTINCT'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_interactive_grid(
+ p_id=>wwv_flow_api.id(1598433780558527)
+,p_internal_uid=>1598433780558527
+,p_is_editable=>false
+,p_lazy_loading=>false
+,p_requires_filter=>false
+,p_show_nulls_as=>'-'
+,p_select_first_row=>true
+,p_pagination_type=>'SCROLL'
+,p_show_total_row_count=>true
+,p_show_toolbar=>true
+,p_enable_save_public_report=>false
+,p_enable_subscriptions=>true
+,p_enable_flashback=>true
+,p_define_chart_view=>true
+,p_enable_download=>true
+,p_enable_mail_download=>true
+,p_fixed_header=>'PAGE'
+,p_show_icon_view=>false
+,p_show_detail_view=>false
+);
+wwv_flow_api.create_ig_report(
+ p_id=>wwv_flow_api.id(1677041879238468)
+,p_interactive_grid_id=>wwv_flow_api.id(1598433780558527)
+,p_type=>'PRIMARY'
+,p_default_view=>'GRID'
+,p_show_row_number=>false
+,p_settings_area_expanded=>true
+);
+wwv_flow_api.create_ig_report_view(
+ p_id=>wwv_flow_api.id(1677141215238470)
+,p_report_id=>wwv_flow_api.id(1677041879238468)
+,p_view_type=>'GRID'
+,p_stretch_columns=>true
+,p_srv_exclude_null_values=>false
+,p_srv_only_display_columns=>true
+,p_edit_mode=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(1677618953238475)
+,p_view_id=>wwv_flow_api.id(1677141215238470)
+,p_display_seq=>1
+,p_column_id=>wwv_flow_api.id(1598503155558528)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>65.09375
+,p_sort_order=>1
+,p_sort_direction=>'DESC'
+,p_sort_nulls=>'FIRST'
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(1678144481238480)
+,p_view_id=>wwv_flow_api.id(1677141215238470)
+,p_display_seq=>2
+,p_column_id=>wwv_flow_api.id(1598613113558529)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>49.09375
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(1678608737238483)
+,p_view_id=>wwv_flow_api.id(1677141215238470)
+,p_display_seq=>3
+,p_column_id=>wwv_flow_api.id(1598796568558530)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>176.109375
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(1679131749238484)
+,p_view_id=>wwv_flow_api.id(1677141215238470)
+,p_display_seq=>4
+,p_column_id=>wwv_flow_api.id(1598829798558531)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(1679614377238486)
+,p_view_id=>wwv_flow_api.id(1677141215238470)
+,p_display_seq=>5
+,p_column_id=>wwv_flow_api.id(1598921634558532)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>84.109375
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(1680175825238488)
+,p_view_id=>wwv_flow_api.id(1677141215238470)
+,p_display_seq=>6
+,p_column_id=>wwv_flow_api.id(1599094053558533)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(1680615630238490)
+,p_view_id=>wwv_flow_api.id(1677141215238470)
+,p_display_seq=>7
+,p_column_id=>wwv_flow_api.id(1599178111558534)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>58.09375
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(1681152780238492)
+,p_view_id=>wwv_flow_api.id(1677141215238470)
+,p_display_seq=>8
+,p_column_id=>wwv_flow_api.id(1599275332558535)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(1681603966238494)
+,p_view_id=>wwv_flow_api.id(1677141215238470)
+,p_display_seq=>9
+,p_column_id=>wwv_flow_api.id(1599321750558536)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(1682107498238496)
+,p_view_id=>wwv_flow_api.id(1677141215238470)
+,p_display_seq=>10
+,p_column_id=>wwv_flow_api.id(1599473224558537)
+,p_is_visible=>true
+,p_is_frozen=>false
 );
 wwv_flow_api.create_page_button(
  p_id=>wwv_flow_api.id(1596082449558503)
@@ -11503,13 +12191,350 @@ wwv_flow_api.create_page_button(
 ,p_button_image_alt=>'Back'
 ,p_button_position=>'BODY'
 ,p_button_redirect_url=>'f?p=&APP_ID.:2:&SESSION.::&DEBUG.:RP::'
+,p_grid_new_grid=>false
 ,p_grid_new_row=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(1281173757426805)
+,p_name=>'P3_LAT_LONG'
+,p_item_sequence=>20
+,p_item_plug_id=>wwv_flow_api.id(1595947586558502)
+,p_prompt=>'Coordinates'
+,p_placeholder=>'lat,long'
+,p_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select ',
+'       LAT||'',''||LONGITUD ',
+'from R_F1_TRACKS',
+'where circuitid = :P3_CIRCUITID'))
+,p_source_type=>'QUERY'
+,p_display_as=>'NATIVE_TEXT_FIELD'
+,p_cSize=>30
+,p_field_template=>wwv_flow_api.id(1430023897538886)
+,p_item_template_options=>'#DEFAULT#'
+,p_attribute_01=>'N'
+,p_attribute_02=>'N'
+,p_attribute_04=>'TEXT'
+,p_attribute_05=>'BOTH'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(1281301794426807)
+,p_name=>'P3_INFO'
+,p_item_sequence=>30
+,p_item_plug_id=>wwv_flow_api.id(1595947586558502)
+,p_item_default=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select CIRCUITNAME',
+'  from R_F1_TRACKS',
+'where circuitid = :P3_CIRCUITID'))
+,p_item_default_type=>'SQL_QUERY'
+,p_prompt=>'Trackname'
+,p_display_as=>'NATIVE_TEXT_FIELD'
+,p_cSize=>30
+,p_field_template=>wwv_flow_api.id(1430023897538886)
+,p_item_template_options=>'#DEFAULT#'
+,p_attribute_01=>'N'
+,p_attribute_02=>'N'
+,p_attribute_04=>'TEXT'
+,p_attribute_05=>'BOTH'
 );
 wwv_flow_api.create_page_item(
  p_id=>wwv_flow_api.id(1595872821558501)
 ,p_name=>'P3_CIRCUITID'
 ,p_item_sequence=>20
 ,p_item_plug_id=>wwv_flow_api.id(1590494375555052)
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_da_event(
+ p_id=>wwv_flow_api.id(1280736027426801)
+,p_name=>'on map loaded'
+,p_event_sequence=>10
+,p_triggering_element_type=>'REGION'
+,p_triggering_region_id=>wwv_flow_api.id(1595947586558502)
+,p_bind_type=>'bind'
+,p_bind_event_type=>'PLUGIN_COM.JK64.SIMPLE_GOOGLE_MAP|REGION TYPE|maploaded'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(1281006068426804)
+,p_event_id=>wwv_flow_api.id(1280736027426801)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_JAVASCRIPT_CODE'
+,p_attribute_01=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'apex.debug("map loaded");',
+'opt_map.iw = new google.maps.InfoWindow();',
+'apex.debug("content="+$v("P3_INFO"));',
+'opt_map.iw.setOptions({',
+'    content: $v("P3_INFO")',
+'});',
+'apex.debug("show info window on map at marker");',
+'opt_map.iw.open(this.data.map, opt_map.marker);'))
+,p_stop_execution_on_error=>'Y'
+);
+end;
+/
+prompt --application/pages/page_00004
+begin
+wwv_flow_api.create_page(
+ p_id=>4
+,p_user_interface_id=>wwv_flow_api.id(1453607254538942)
+,p_name=>'Race Results'
+,p_step_title=>'Race Results'
+,p_autocomplete_on_off=>'OFF'
+,p_page_template_options=>'#DEFAULT#'
+,p_last_updated_by=>'UHELLSTR'
+,p_last_upd_yyyymmddhh24miss=>'20190702140333'
+);
+wwv_flow_api.create_report_region(
+ p_id=>wwv_flow_api.id(1599596061558538)
+,p_name=>'Starting Grid'
+,p_template=>wwv_flow_api.id(1375037481538848)
+,p_display_sequence=>10
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_component_template_options=>'#DEFAULT#:t-Report--altRowsDefault:t-Report--rowHighlight'
+,p_display_point=>'BODY'
+,p_source_type=>'NATIVE_SQL_REPORT'
+,p_query_type=>'SQL'
+,p_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select',
+'  season,',
+'  round,',
+'  circuitname,',
+'  locality,',
+'  country,',
+'  racedate,',
+'  drivernumber,',
+'  code,',
+'  givenname,',
+'  familyname, ',
+'  nationality,',
+'  constructor,',
+'  constructornationality,',
+'  case ',
+'  when q3 is not null and q2 is not null and q1 is not null then',
+'    ''Q3''',
+'  when q3 is null and q2 is not null and q1 is not null then ',
+'    ''Q2''',
+'  when q3 is null and q2 is null and q1 is not null then',
+'    ''Q1''',
+'  else',
+'    null',
+'  end as qualification,  ',
+'  case ',
+'  when q3 is not null and q2 is not null and q1 is not null then',
+'    q3',
+'  when q3 is null and q2 is not null and q1 is not null then ',
+'    q2',
+'  when q3 is null and q2 is null and q1 is not null then',
+'    q1',
+'  else',
+'    null',
+'  end as qualification_time,',
+'  to_number(position) as starting_grid',
+'from',
+'  r_mv_f1_qualification_times',
+'where to_number(season) = to_number(:P4_SEASON)',
+'  and position is not null',
+'  and to_number(round) = to_number(:P4_RACE)',
+'order by to_number(position) asc;'))
+,p_ajax_enabled=>'Y'
+,p_query_row_template=>wwv_flow_api.id(1400779506538865)
+,p_query_num_rows=>15
+,p_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_query_show_nulls_as=>'-'
+,p_query_num_rows_type=>'NEXT_PREVIOUS_LINKS'
+,p_pagination_display_position=>'BOTTOM_RIGHT'
+,p_csv_output=>'N'
+,p_prn_output=>'N'
+,p_sort_null=>'L'
+,p_plug_query_strip_html=>'N'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1599678930558539)
+,p_query_column_id=>1
+,p_column_alias=>'SEASON'
+,p_column_display_sequence=>1
+,p_column_heading=>'Season'
+,p_use_as_row_header=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1599756505558540)
+,p_query_column_id=>2
+,p_column_alias=>'ROUND'
+,p_column_display_sequence=>2
+,p_column_heading=>'Round'
+,p_use_as_row_header=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1599894262558541)
+,p_query_column_id=>3
+,p_column_alias=>'CIRCUITNAME'
+,p_column_display_sequence=>3
+,p_column_heading=>'Circuitname'
+,p_use_as_row_header=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1599987064558542)
+,p_query_column_id=>4
+,p_column_alias=>'LOCALITY'
+,p_column_display_sequence=>4
+,p_column_heading=>'Locality'
+,p_use_as_row_header=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1600098322558543)
+,p_query_column_id=>5
+,p_column_alias=>'COUNTRY'
+,p_column_display_sequence=>5
+,p_column_heading=>'Country'
+,p_use_as_row_header=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1600186137558544)
+,p_query_column_id=>6
+,p_column_alias=>'RACEDATE'
+,p_column_display_sequence=>6
+,p_column_heading=>'Racedate'
+,p_use_as_row_header=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1600278537558545)
+,p_query_column_id=>7
+,p_column_alias=>'DRIVERNUMBER'
+,p_column_display_sequence=>7
+,p_column_heading=>'Drivernumber'
+,p_use_as_row_header=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1600458568558547)
+,p_query_column_id=>8
+,p_column_alias=>'CODE'
+,p_column_display_sequence=>8
+,p_column_heading=>'Code'
+,p_use_as_row_header=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1600539413558548)
+,p_query_column_id=>9
+,p_column_alias=>'GIVENNAME'
+,p_column_display_sequence=>9
+,p_column_heading=>'Givenname'
+,p_use_as_row_header=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1600681806558549)
+,p_query_column_id=>10
+,p_column_alias=>'FAMILYNAME'
+,p_column_display_sequence=>10
+,p_column_heading=>'Familyname'
+,p_use_as_row_header=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1600787794558550)
+,p_query_column_id=>11
+,p_column_alias=>'NATIONALITY'
+,p_column_display_sequence=>11
+,p_column_heading=>'Nationality'
+,p_use_as_row_header=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1686286460331501)
+,p_query_column_id=>12
+,p_column_alias=>'CONSTRUCTOR'
+,p_column_display_sequence=>12
+,p_column_heading=>'Constructor'
+,p_use_as_row_header=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1686346118331502)
+,p_query_column_id=>13
+,p_column_alias=>'CONSTRUCTORNATIONALITY'
+,p_column_display_sequence=>13
+,p_column_heading=>'Constructornationality'
+,p_use_as_row_header=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1686498877331503)
+,p_query_column_id=>14
+,p_column_alias=>'QUALIFICATION'
+,p_column_display_sequence=>14
+,p_column_heading=>'Qualification'
+,p_use_as_row_header=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1686535249331504)
+,p_query_column_id=>15
+,p_column_alias=>'QUALIFICATION_TIME'
+,p_column_display_sequence=>15
+,p_column_heading=>'Qualification Time'
+,p_use_as_row_header=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_report_columns(
+ p_id=>wwv_flow_api.id(1686664092331505)
+,p_query_column_id=>16
+,p_column_alias=>'STARTING_GRID'
+,p_column_display_sequence=>16
+,p_column_heading=>'Starting Grid'
+,p_use_as_row_header=>'N'
+,p_derived_column=>'N'
+,p_include_in_export=>'Y'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(1686903351331508)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_api.id(1599596061558538)
+,p_button_name=>'Back'
+,p_button_action=>'REDIRECT_PAGE'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight'
+,p_button_template_id=>wwv_flow_api.id(1431239711538889)
+,p_button_image_alt=>'Back'
+,p_button_position=>'REGION_TEMPLATE_PREVIOUS'
+,p_button_redirect_url=>'f?p=&APP_ID.:3:&SESSION.::&DEBUG.:RP::'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(1686776956331506)
+,p_name=>'P4_RACE'
+,p_item_sequence=>20
+,p_item_plug_id=>wwv_flow_api.id(1599596061558538)
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(1686892988331507)
+,p_name=>'P4_SEASON'
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_api.id(1599596061558538)
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_attribute_01=>'Y'
 );
