@@ -433,7 +433,6 @@ group by season
 select
   season,
   round,
-
   circuitname,
   locality,
   country,
@@ -476,6 +475,66 @@ where to_number(season) = to_number(to_char(trunc(sysdate),'RRRR'))
                           where to_number(season) = to_number(to_char(trunc(sysdate),'RRRR'))
                             and to_date(race_date,'RRRR-MM-DD') >= trunc(sysdate))
 order by to_number(position) asc;
+
+-- Give us the fastest qualification lap on a track
+
+select season,
+       round,
+       racedate,
+       drivernumber,
+       position,
+       driverid,
+       constructor,
+       qualification_time
+from
+(
+select
+  qu.season,
+  qu.round,
+  qu.racedate,
+  qu.drivernumber,
+  qu.position,
+  qu.driverid,
+  qu.permanentnumber,
+  qu.code,
+  qu.constructor,
+  case
+    when q3 is not null and q2 is not null and q1 is not null then
+      q3
+    when q3 is null and q2 is not null and q1 is not null then 
+      q2
+    when q3 is null and q2 is null and q1 is not null then
+      q1
+    else
+      null
+  end as qualification_time,  
+  case 
+    when q3 is not null and q2 is not null and q1 is not null then
+      to_number(qu.q3_millis)
+    when q3 is null and q2 is not null and q1 is not null then 
+      to_number(qu.q2_millis)
+    when q3 is null and q2 is null and q1 is not null then
+      to_number(qu.q1_millis)
+    else null
+  end as millis 
+from
+  mv_f1_qualification_times qu
+where to_number(qu.position) = 1
+  and qu.circuitid = 'red_bull_ring'
+) where millis = (select min(
+                             case 
+                               when q3 is not null and q2 is not null and q1 is not null then
+                                 to_number(qa.q3_millis)
+                               when q3 is null and q2 is not null and q1 is not null then 
+                                 to_number(qa.q2_millis)
+                               when q3 is null and q2 is null and q1 is not null then
+                                 to_number(qa.q1_millis)
+                               else 9999999
+                              end
+                              )
+                  from mv_f1_qualification_times qa
+                  where qa.circuitid = 'red_bull_ring'
+                    and to_number(qa.position) = 1);
 
 ---- Try to parse  and Get race date from wikipedia for a race not yet in the database
 --

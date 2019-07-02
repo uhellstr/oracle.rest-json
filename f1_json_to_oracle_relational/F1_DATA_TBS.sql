@@ -846,3 +846,68 @@ on q.season = r.season and q.round = r.round;
   ;  
 
    COMMENT ON MATERIALIZED VIEW "F1_DATA"."MV_F1_QUALIFICATION_TIMES"  IS 'snapshot table for snapshot F1_DATA.MV_F1_QUALIFICATION_TIMES';
+   
+--------------------------------------------------------
+--  DDL for Materialized View MV_F1_RESULTS
+--------------------------------------------------------
+
+  CREATE MATERIALIZED VIEW "F1_DATA"."MV_F1_RESULTS" ("SEASON", "RACE", "INFO", "RACENAME", "CIRCUITID", "URL", "CIRCUITNAME", "LAT", "LON", "LOCALITY", "COUNTRY", "RACEDATE", "PILOTNR", "POSITION", "POSITIONTEXT", "POINTS", "DRIVERID", "DRIVURL", "GIVENNAME", "FAMILYNAME", "DATEOFBIRTH", "NATIONALITY", "CONSTRUCTORID", "CONSTRUCTORINFO", "CONSTRUCTORNAME", "CONSTRUCTORNATIONALITY", "GRID", "LAPS", "STATUS", "RANKING", "FASTESTLAP", "UNITS", "SPEED", "MILLIS", "RACETIME")
+  SEGMENT CREATION IMMEDIATE
+  ORGANIZATION HEAP PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 
+ NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS" 
+  BUILD IMMEDIATE
+  USING INDEX 
+  REFRESH FORCE ON DEMAND
+  USING DEFAULT LOCAL ROLLBACK SEGMENT
+  USING ENFORCED CONSTRAINTS DISABLE ON QUERY COMPUTATION DISABLE QUERY REWRITE
+  AS select
+  to_number(season) as season,
+  to_number(race) as race,
+  info,
+  racename,
+  circuitid,
+  url,
+  circuitname,
+  lat,
+  lon,
+  locality,
+  country,
+  racedate,
+  pilotnr,
+  to_number(position) as position,
+  positiontext,
+  points,
+  driverid,
+  drivurl,
+  givenname,
+  familyname,
+  dateofbirth,
+  nationality,
+  constructorid,
+  constructorinfo,
+  constructorname,
+  constructornationality,
+  grid,
+  laps,
+  status,
+  ranking,
+  fastestlap,
+  units,
+  speed,
+  millis,
+  racetime
+from
+  v_f1_results;
+
+  CREATE INDEX "F1_DATA"."MV_F1_RESULTS_INDEX1" ON "F1_DATA"."MV_F1_RESULTS" ("SEASON", "RACE") 
+  PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS" ;
+
+   COMMENT ON MATERIALIZED VIEW "F1_DATA"."MV_F1_RESULTS"  IS 'snapshot table for snapshot F1_DATA.MV_F1_RESULTS';

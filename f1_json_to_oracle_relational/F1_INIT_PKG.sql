@@ -25,7 +25,7 @@ as
     select round into lv_retval
     from
     (
-      select round
+      select to_number(round) as round
       from v_f1_upcoming_races
       where to_date(race_date,'YYYY-MM-DD') > trunc(sysdate)
       order by to_number(round)
@@ -176,7 +176,6 @@ as
 
     for rec in cur_get_season_year loop
       calling_url := replace(url,'{YEAR}',rec.season);
-      --dbms_output.put_line(calling_url);
       get_races(rec.season,calling_url);
     end loop;
 
@@ -199,8 +198,8 @@ as
     lv_next_round_nr number;
 
     cursor cur_get_f1_races is
-    select season
-           ,round
+    select to_number(season) as season
+           ,to_number(round) as round
     from v_f1_races;
 
     -- inline
@@ -360,7 +359,7 @@ as
     calling_url clob;
 
     cursor cur_get_f1_seasons is
-    select season
+    select to_number(season) as season
     from v_f1_season;
 
     -- inline
@@ -404,7 +403,6 @@ as
   begin
     for rec in cur_get_f1_seasons loop
       calling_url := replace(url,'{YEAR}',rec.season);
-      --dbms_output.put_line(calling_url);
       insert_results(rec.season,calling_url);
     end loop;   
   end load_f1_constructorstandings;
@@ -424,7 +422,7 @@ as
     calling_url clob;
 
     cursor cur_get_f1_seasons is
-    select season
+    select to_number(season) as season
     from v_f1_season;
 
     -- inline
@@ -463,7 +461,6 @@ as
 
     for rec in cur_get_f1_seasons loop
       calling_url := replace(url,'{YEAR}',rec.season);
-      --dbms_output.put_line(calling_url);
       insert_results(rec.season,calling_url);
     end loop;
 
@@ -487,7 +484,7 @@ as
     lv_next_round_nr number;
 
     cursor cur_get_season_year is
-    select season
+    select to_number(season) as season
     from v_f1_season
     where to_number(season) > 1993;  
 
@@ -548,20 +545,11 @@ as
       if lv_number_of_races > 0 then
 
         for i in 1..lv_number_of_races loop
-
-          -- In current season do not try to load races not yet raced!
-          if rec.season = to_number(to_char(sysdate,'RRRR')) then
-            lv_next_round_nr := ret_next_race_in_cur_season;
-          else
-            lv_next_round_nr := 999;
-          end if;
-          if i < lv_next_round_nr then
-            tmp_url := replace(url,'{YEAR}',rec.season);
-            calling_url := replace(tmp_url,'{ROUND}',i);                  
-            get_qualitimes(rec.season,i,calling_url);
-          end if;
-
-        end loop; --lv_number_of_races       
+          tmp_url := replace(url,'{YEAR}',rec.season);
+          calling_url := replace(tmp_url,'{ROUND}',i);                  
+          get_qualitimes(rec.season,i,calling_url);
+        end loop; --lv_number_of_races     
+        
       end if; -- Has the season started yeat? 
    end loop;         
   end load_f1_qualitimes;  
@@ -586,7 +574,7 @@ as
     lv_next_round_nr number; 
 
     cursor cur_get_season_year is
-    select season
+    select to_number(season) as season
     from v_f1_season
     where to_number(season) > 1995;
 
@@ -685,6 +673,7 @@ as
   begin
     DBMS_SNAPSHOT.REFRESH( '"F1_DATA"."MV_F1_LAP_TIMES"','C');
     DBMS_SNAPSHOT.REFRESH( '"F1_DATA"."MV_F1_QUALIFICATION_TIMES"','C');
+    DBMS_SNAPSHOT.REFRESH( '"F1_DATA"."MV_F1_RESULTS"','C');
   end refresh_mviews;
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
