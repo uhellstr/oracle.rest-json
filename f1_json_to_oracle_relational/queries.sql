@@ -535,6 +535,24 @@ where to_number(qu.position) = 1
                   from mv_f1_qualification_times qa
                   where qa.circuitid = 'red_bull_ring'
                     and to_number(qa.position) = 1);
+                    
+-- Get the fastest lap time for a specific race
+select lp.season
+       ,lp.round
+       ,lp.circuitid
+       ,lp.circuitname
+       ,lp.race_date
+       ,lp.lap
+       ,lp.driverid
+       ,lp.position
+       ,lp.laptime
+from mv_f1_lap_times lp
+where lp.season = 2019
+  and lp.round = 9
+  and lp.laptimes_millis = (select min(lp1.laptimes_millis)
+                            from mv_f1_lap_times lp1
+                            where lp1.season = 2019
+                              and lp1.round = 9);
 
 ---- Try to parse  and Get race date from wikipedia for a race not yet in the database
 --
