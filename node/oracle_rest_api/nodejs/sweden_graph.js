@@ -1,4 +1,5 @@
 var Request = require("request");
+var config = require("./config.json")
 var blessed = require('blessed')
   , contrib = require('blessed-contrib')
   , screen = blessed.screen()
@@ -16,7 +17,7 @@ var blessed = require('blessed')
 var year = []
 var population = []
 
-Request.get("http://localhost:8080/ords/xepdb1/rest_data/testmodule/country/Sweden", (error, response, body) => {
+Request.get(config.resturl+"/country/Sweden", (error, response, body) => {
     if(error) {
         return console.dir(error);
     }

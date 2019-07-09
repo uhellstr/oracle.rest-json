@@ -1,2 +1,3 @@
+npm install require
 npm install blessed
 npm install blessed-contrib

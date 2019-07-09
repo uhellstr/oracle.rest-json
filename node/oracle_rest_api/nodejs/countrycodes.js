@@ -1,7 +1,8 @@
 var Request = require("request");
+var config = require("./config.json")
 var data = []
 
-Request.get("http://localhost:8080/ords/xepdb1/rest_data/testmodule/countrynames/", (error, response, body) => {
+Request.get(config.resturl +"/countrynames/", (error, response, body) => {
     if(error) {
         return console.dir(error);
     }
