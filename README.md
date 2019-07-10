@@ -47,7 +47,7 @@ After the installation of APEX the i highly recommend you try to connect to the 
 
 You also need to enable APEX_PUBLIC_USER as:
 
-6. SQL> alter user APEX_PUBLIC_USER identified by "<password of your choise>" account unlock;
+6. SQL> alter user APEX_PUBLIC_USER identified by "your secret password" account unlock;
 
 Also verify you can connect to the APEX_PUBLIC_USER.
 
