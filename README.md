@@ -129,3 +129,21 @@ http://<your host where ords is installed>:8080/ords/xepdb1/rest_data/testmodule
 Example: http://localhost:8080/ords/xepdb1/rest_data/testmodule/countrynames/
 
 If everything works you should get a JSON document in return with all the countries in the world as countrycode and countrynames.
+
+Using the node example code:
+----------------------------
+
+If you don't want to write your own client you could test out the provided example code written for nodejs
+Installing nodejs is reallys simple. For more information on how to get started see https://nodejs.org/en/
+
+When you have nodejs working you need to apply some modules to get the demos to work:
+Use npm to install
+
+* require
+* blessed
+* blessed-contrib
+
+That should be as easy as "npm install require" etc.
+
+To get a graph in your terminal over popultion development in Sweden from the 60's and forward run
+node sweden_graph.js
