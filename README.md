@@ -42,11 +42,13 @@ Even if there is no intent to use APEX i recommend you setup ORDS for APEX that 
 
 After the installation of APEX the i highly recommend you try to connect to the following schemas to make sure you can connect to them
 
-APEX_LISTENER
-APEX_REST_PUBLIC_USER
-you also need to enable APEX_PUBLIC_USER as:
-SQL> alter user APEX_PUBLIC_USER identified by "<password of your choise>" account unlock;
-Then again try to connect to APEX_PUBLIC_USER so that the connection works correctly.
+4. APEX_LISTENER
+5. APEX_REST_PUBLIC_USER
+
+You also need to enable APEX_PUBLIC_USER as:
+6. SQL> alter user APEX_PUBLIC_USER identified by "<password of your choise>" account unlock;
+
+Also verify you can connect to the APEX_PUBLIC_USER.
 
 b) Create a catalog (you don't need to be the Oracle O/S user as long as you can run java) called ords and the following subcatalogs. In this example we have downloaded ORDS version 19. In this example we use the O/S user test that has it's home catalog in /home/test
 
