@@ -22,7 +22,7 @@ You also need ORDS installed and configured (see example below) to be able to ca
 Tim Hall's excelent site:
 https://oracle-base.com
 
-You can use a browswer like Chromium, Safari, Firefox to call the published services but the demo also includes som examples made with the nodejs engine to show that you can call Oracle Rest enabled services from any language supporting JSON and REST calls. You could easy create a client in any language like python, ruby or even in C. See your platform for how to install node. (It's easy) if you intend to try out the node part of the code
+You can use a browser like Chromium, Safari, Firefox to call the published services but the demo also includes som examples made with the nodejs engine to show that you can call Oracle Rest enabled services from any language supporting JSON and REST calls. You could easy create a client in any language like python, ruby or even in C. See your platform for how to install node. (It's easy) if you intend to try out the node part of the code
 
 Configuring ORDS:
 
@@ -30,9 +30,9 @@ a) Install Oracle Application Express (APEX) if not installed in the datbase you
 
 Installing APEX normally done as SYS by running the following scripts from the catalog where you unzipped the downloaded apex zip file. Use sqlplus or sqlcl against either a pluggable database if you run this demo against 12c or higher or a normal database if below 12c. (Recommend atleast 11g as a minimum) If you don't have a database you will need to setup that first. 
 
-SQL>@apexins SYSAUX SYSAUX TEMP /i/
-SQL>@apex_rest_config (To setup APEX_LISTENER, APEX_REST_PUBLIC_USER that is a MUST for ORDS to work correctly)
-SQL>@apxchpwd (Setup the password for the internal workspace admin user)
+1. SQL>@apexins SYSAUX SYSAUX TEMP /i/
+2. SQL>@apex_rest_config (To setup APEX_LISTENER, APEX_REST_PUBLIC_USER that is a MUST for ORDS to work correctly)
+3. SQL>@apxchpwd (Setup the password for the internal workspace admin user)
 
 In this example we have installed Oracle 18c Express Edition as a demonstration environment. Since 18 uses multitenant by default
 we have a containerdatabase XE and atleast one pluggable database XEPDB1 by default setup after installation. All configuration
@@ -45,7 +45,6 @@ After the installation of APEX the i highly recommend you try to connect to the 
 APEX_LISTENER
 APEX_REST_PUBLIC_USER
 you also need to enable APEX_PUBLIC_USER as:
-
 SQL> alter user APEX_PUBLIC_USER identified by "<password of your choise>" account unlock;
 Then again try to connect to APEX_PUBLIC_USER so that the connection works correctly.
 
