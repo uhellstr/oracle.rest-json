@@ -34,7 +34,7 @@ Installing APEX normally done as SYS by running the following scripts from the c
 2. SQL>@apex_rest_config (To setup APEX_LISTENER, APEX_REST_PUBLIC_USER that is a MUST for ORDS to work correctly)
 3. SQL>@apxchpwd (Setup the password for the internal workspace admin user)
 
-In this example we have installed Oracle 18c Express Edition as a demonstration environment. Since 18 uses multitenant by default
+In this example we have installed Oracle 18c Express Edition as a demonstration environment. Since Oracle 18c uses multitenant by default
 we have a containerdatabase XE and atleast one pluggable database XEPDB1 by default setup after installation. All configuration
 and installation is done against the pluggable database XEPDB1
 
