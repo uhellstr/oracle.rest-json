@@ -50,42 +50,44 @@ Then again try to connect to APEX_PUBLIC_USER so that the connection works corre
 
 b) Create a catalog (you don't need to be the Oracle O/S user as long as you can run java) called ords and the following subcatalogs. In this example we have downloaded ORDS version 19. In this example we use the O/S user test that has it's home catalog in /home/test
 
-$ mkdir ords
-$ cd ords
-$ mkdir ords191
-$ mkdir scripts
-$ mkdir logs
-$ mkdir configdir
+1. $ mkdir ords
+2. $ cd ords
+3. $ mkdir ords191
+4. $ mkdir scripts
+5. $ mkdir logs
+6. $ mkdir configdir
 
 Also copy over the subcatalog images from your APEX installation. This is done by
 
 Wherever you have APEX unziped
-$ cd /../apex
-$ zip -r images.zip ./images/*
+
+1. $ cd /../apex
+2. $ zip -r images.zip ./images/*
 
 Move the images.zip file to /home/test/ords and 
-$ unzip images.zip
+3. $ unzip images.zip
+
 You should now have a images catalog also in /home/test/ords 
 
 Put the downloaded zip file with the latest ORDS version in the ords191 catalong and unzip it.
-$ cd ords191
-$ unzip ords-18.10.0.092.1545.zip (Your file might have another name depending on version)
+1. $ cd ords191
+2. $ unzip ords-18.10.0.092.1545.zip (Your file might have another name depending on version)
 
 c) Then we need to setup where ORDS is storing it's configuration files
 
-$ cd /ords/ords181
-$ java -jar ords.war configdir /home/test/ords/configdir (You need to alter the path to where the configdir is created)
+1. $ cd /ords/ords181
+2. $ java -jar ords.war configdir /home/test/ords/configdir (You need to alter the path to where the configdir is created)
 
 Then we setup a path for our database. In our example we use 18c Express Edition and the pluggable database xepdb1.
 You will understand how the path is used when calling the service below
 
-$ java -jar ords.war map-url --type base-path /xepdb1 xepdb1
+3. $ java -jar ords.war map-url --type base-path /xepdb1 xepdb1
 
 Then we run the configuration to enable ORDS in the xepdb1 database. You must configure all steps and the script will ask you for
 the administrator user or SYS for the installation to complete. For more details in depth please see references on how to setup
 ORDS on Tim Hall's site as stated above.
 
-$ java -jar ords.war setup --database xepdb1
+4. $ java -jar ords.war setup --database xepdb1
 
 Don't skip any steps more then the last that asks if you want to start ORDS in standalone mode. We do it manually below.
 
@@ -93,11 +95,11 @@ When you are finished with the ORDS configuration you can startup the ORDS liste
 check that things works as intended. (Remember the step with "base-path" setup "/xepdb1". This will now uniqly identify what
 resource we call
 
-$ java -jar ords.war standalone
+5. $ java -jar ords.war standalone
 
 Running this will ask about using http or https. For demo purpose use HTTP , default port (Normally 8080) and where to find APEX images catalog in the example /home/test/ords/images
 
-d) Now you can try out to see if APEX and ORDS works as intended by using a URL like
+d) Now you can try out to see if APEX and ORDS works as intended by using a browser and a URL like:
 
 http://<you host where ords is installed>:8080/ords/xepdb1/apex_admin
 
@@ -106,20 +108,19 @@ http://localhost:8080/ords/xepdb1/apex_admin
 
 If everything works you should see the login page for Oracle Application Express.
 
-
 e) Setup the database schema for the demonstration:
 
 To setup the database schema see the sql scripts provided in the subdirectory node/oracle_rest_api/sql
 
-1. Create the REST_DATA schema as SYS run the script (You can change the password for the schema in the script. I'ts set to "oracle" by default.
+Create the REST_DATA schema as SYS run the script (You can change the password for the schema in the script. I'ts set to "oracle" by default.
 
-SQL> @SETUP_SCHEMA.sql
+1. SQL> @SETUP_SCHEMA.sql
 
-2. To setup all database objects and enable ORDS in the schema connect as REST_DATA/oracle and run
+To setup all database objects and enable ORDS in the schema connect as REST_DATA/oracle and run
 
-SQL> @SETUP_REST_DATA_OBJS.sql
+2. SQL> @SETUP_REST_DATA_OBJS.sql
 
-3. From your browser try the following URL to verify that the demo works.
+From your browser try the following URL to verify that the demo works.
 
 http://<your host where ords is installed>:8080/ords/xepdb1/rest_data/testmodule/countrynames/
 
