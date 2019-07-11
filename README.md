@@ -131,7 +131,31 @@ Example: http://localhost:8080/ords/xepdb1/rest_data/testmodule/countrynames/
 
 If everything works you should get a JSON document in return with all the countries in the world as countrycode and countrynames.
 
-Using the node example code:
+Anotther example is to check how the population growth for Sweden looked like from the 60's until around 2010. That can be
+done by calling the following url:
+
+http://localhost:8080/ords/xepdb1/rest_data/testmodule/country/Sweden
+
+How does this work e.g how do we get our relational data out as JSON ?
+----------------------------------------------------------------------
+
+First of all look at the sql script REST_SETUP.sql
+This script instructs Oracle to enable REST for the Oracle schema rest_data and is a way of granting permission
+to allow data to be called from the ORDS service.
+
+Nest study the COUNTRY_STATS_PKG.sql script. THis includes the PL/SQL package that we use to transform relational
+data to JSON format. If you look at the code you can see that we use some magic underlying code from the APEX framework.
+The apex_json package in APEX allow to transform data to json. If you look carefully at the package in your database
+with SQL*Developer you even can see that you can do some debugging of the code to get the resulting JSON document
+even within SQL*Developer itself.
+
+But this do not explain how ORDS maps it service thru the PL/SQL code to a URL call ?
+The final magic lies in the code you find in SETUP_REST_COUNTRY_CODE.sql
+This is where we tell ORDS how to map the PL/SQL packaged code back to URL where we
+even allow for calling the PL/SQL package with paramters like what country we want statistics for
+as in the above example where we look at the population for Sweden.
+
+Using the node example code written in node:
 ----------------------------
 
 If you don't want to write your own client you could test out the provided example code written for nodejs
