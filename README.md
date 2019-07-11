@@ -254,7 +254,7 @@ select apex_web_service.make_rest_request(
     p_http_method => 'GET' 
 ) as result from dual;
 
-2. When and only when the query abow works it is time to setup the schema and initiate the job to start download data from ergast.com
+2. When and only when the query above works it is time to setup the schema and initiate the job to start download data from ergast.com
 This is done by running the "setup_objs.sql" scipt to initiate all tables and views and the scheduler job.
 The script should only be run as the "F1_DATA" schema user.
 
