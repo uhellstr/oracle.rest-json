@@ -259,6 +259,7 @@ This is done by running the "setup_objs.sql" scipt to initiate all tables and vi
 The script should only be run as the "F1_DATA" schema user.
 
 a) SQL> conn F1_DATA/oracle
+
 b) SQL> @setup_objs.sql
 
 Check for any errors. I recommend to use SQL*Developer to check for any invalid objects and re-compile them and also look at the
