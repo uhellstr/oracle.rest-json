@@ -258,8 +258,8 @@ select apex_web_service.make_rest_request(
 This is done by running the "setup_objs.sql" scipt to initiate all tables and views and the scheduler job.
 The script should only be run as the "F1_DATA" schema user.
 
-SQL> conn F1_DATA/oracle
-SQL> @setup_objs.sql
+a) SQL> conn F1_DATA/oracle
+b) SQL> @setup_objs.sql
 
 Check for any errors. I recommend to use SQL*Developer to check for any invalid objects and re-compile them and also look at the
 scheduler job to make sure it runs as intended. The job will be started once every hour if everyting works so it might take some
