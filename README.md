@@ -8,7 +8,8 @@ This is a demo of Oracle's functionality of using and creating Rest Based servic
 
 Requirements:
 
-* Oracle 11g or higher. (For a non licensed environment recommend to use Oracle 18c Express Edition or higher)
+* Linux environment supported like Centos7. The demo is not tested or has any scripts for Windows.
+* Oracle 11g or higher. (For a non licensed environment I strongly recommend to use Oracle 18c Express Edition or higher)
 * Java 8 or higher where you install Oracle Rest Data Services. 
 * Oracle Application Express version 5 or higher
 * Latest version of Oracle Rest Data services (ORDS)
@@ -101,6 +102,27 @@ resource we call
 5. $ java -jar ords.war standalone
 
 Running this will ask about using http or https. For demo purpose use HTTP , default port (Normally 8080) and where to find APEX images catalog in the example /home/test/ords/images
+
+The issue with starting ORDS in the way above is that we have to let the terminal window to be open. If we close it or
+press Ctrl+C we will force quit ORDS. If you want you can put the following shellscripts as executables in the 
+scripts subfolder and then add the path to that folder to your environemnt to allow stop/start ORDS in the background.
+You ofcause needs to edit the paths below if you have another user then test setup in your environment.
+
+startords:
+
+#!/bin/bash
+export PATH=/usr/sbin:/usr/local/bin:/usr/bin:/usr/local/sbin:$PATH
+LOGFILE=/home/test/ords/logs/ords-`date +"%Y""%m""%d"`.log
+cd /home/test/ords/ords191 
+export JAVA_OPTIONS="-Dorg.eclipse.jetty.server.Request.maxFormContentSize=3000000"
+nohup java ${JAVA_OPTIONS} -jar ords.war standalone >> $LOGFILE 2>&1 &
+echo "View log file with : tail -f $LOGFILE"
+
+stopords:
+
+#!/bin/bash
+export PATH=/usr/sbin:/usr/local/bin:/usr/bin:/usr/local/sbin:$PATH
+kill `ps -ef | grep ords.war | awk '{print $2}'` >/dev/null 2>&1stopords:
 
 d) Now you can try out to see if APEX and ORDS works as intended by using a browser and a URL like:
 
