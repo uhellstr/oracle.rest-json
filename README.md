@@ -206,13 +206,15 @@ Requirements:
 * Oracle Application Express version 5 or higher. 
 
 I'm a huge fan of Formula 1. I've been following it since i was a kid and the "Superswede" Ronnie Peterson was my absolute
-hero. I still belie the Lotus 72D is one of the most butiful oneseater cars ever built. As a "datanerd". Note i did not 
-write databasenerd. Actually i'm more into analysing data then the database technology itself. Again as a "datanerd" i love
-to analyze data I would love to have a way of being able to look at data for historical Formula 1 races, season, laptimes etc.
+hero. I still belive the "Lotus 72D" is one of the most beatiful oneseater cars ever built. As a "datanerd". Note i did not 
+write databasenerd. Actually i'm more into analysing data then the database technology itself. Again as a "datanerd" I love
+to analyze data. So having a lot of F1 data for historical Formula 1 races, season, laptimes etc would be great to help me
+better understand how the teams differs from each others, how drivers perform during a season, what enginges seems to have
+more problems then others etc.
 
 Now, thanks to https://ergast.com/mrd/ I finally found a way to be able to get hold of data and do some analysis of my favorite
 motorsport besides Indycar. This site publish allot of statistical data in form of REST services and you can download the raw
-JSON document store in a Oracle database (Oracle supports JSON storage in tables) and the parse and query the data as if it is
+JSON document and store them in a Oracle database (Oracle supports JSON storage in tables) and the parse and query the data as if it is
 a normal relational table.
 
 If you want to setup this demo yourself be warned. You will download 10 000's of relative small JSON documents and the volume of
@@ -269,5 +271,3 @@ How to use the data for analysis ?
 I have provided a SQL script called "queries.sql" you can use for start analysing the data. I also provided a number of materialized views that speeds up some queries due to minimize parsing time when joining different tables with each others.
 
 I'm currently building a APEX application ontop of the data but it's not yet ready but the query part might be interesting nevertheless.
-
-
