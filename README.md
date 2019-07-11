@@ -193,4 +193,81 @@ Use npm to install
 That should be as easy as "npm install require" etc.
 
 To get a graph in your terminal over popultion development in Sweden from the 60's and forward run
-node sweden_graph.js
+
+$ node sweden_graph.js
+
+How to consume a REST service and transform JSON to Relational data for SQL analysis ?
+--------------------------------------------------------------------------------------
+
+Requirements:
+
+* Linux environment supported like Centos7. The demo is not tested or has any scripts for Windows.
+* Oracle 12c or higher. (For a non licensed environment I strongly recommend to use Oracle 18c Express Edition or higher) 
+* Oracle Application Express version 5 or higher. 
+
+I'm a huge fan of Formula 1. I've been following it since i was a kid and the "Superswede" Ronnie Peterson was my absolute
+hero. I still belie the Lotus 72D is one of the most butiful oneseater cars ever built. As a "datanerd". Note i did not 
+write databasenerd. Actually i'm more into analysing data then the database technology itself. Again as a "datanerd" i love
+to analyze data I would love to have a way of being able to look at data for historical Formula 1 races, season, laptimes etc.
+
+Now, thanks to https://ergast.com/mrd/ I finally found a way to be able to get hold of data and do some analysis of my favorite
+motorsport besides Indycar. This site publish allot of statistical data in form of REST services and you can download the raw
+JSON document store in a Oracle database (Oracle supports JSON storage in tables) and the parse and query the data as if it is
+a normal relational table.
+
+If you want to setup this demo yourself be warned. You will download 10 000's of relative small JSON documents and the volume of
+races are huge. The first official Formula 1 race was done in the 1950's. Not all years have the full statistics, it was not until
+around 1996 the technology was there to get lot of more data that is now public for publishing. But in anycase this will take some
+time to get your tables loaded before you can start to analyze. On a medium to good internet connection assume it will take around
+4-5 hours to get the data in place. The data is loaded thru a scheduled job so you do not need to sit around and wait for it to be finished. 
+
+When everything is in place you will have information about all F1 seasons, all races, qualification times , lap times , constructors and drivers.
+
+All the code is in the subfolder "f1_son_to_oracle_relational" in this github repo.
+
+How to install the basetables and start load the data from ergast ?
+-------------------------------------------------------------------
+
+1. First you need to run the "setup_schema.sql" script as SYS.
+
+Now before running it look at the ACL part and change the password for the F1_DATA schema if not in a isolted demo environment. 
+You must have APEX installed before attempting to run the script and depending on the version of APEX you have you need to change the script to match your APEX installation schema.
+
+The script defaults to 19.1 of APEX and in that version the schemaname is APEX_190100. You must change that to match
+the version installed in your database in all places where it is used in the script.
+
+You also have to look at the DBMS_NETWORK_ACL_ADMIN.ASSIGN_ACL where you set the hostname for the server where the Oracle database is installed.
+
+In the example it is set to 'localhost'. You need to change that to match your environment.
+
+The ACL part (Access Control List) is where we tell the Oracle database that we allow for doing http calls from inside the database
+and to a website outside our protected environment. It is quite complex configuration so I refer to the official Oracle documentation for you to read more about ACL's in Oracle.
+
+When done with the necessary changes you can run the script as SYS.
+
+When it is done you could try to do a call to ergast thru the SQL below to see if it works. If not you need to start to check for any errors in the setup for ACL, firewall issuest etc that could cause the callout to fail.
+
+select apex_web_service.make_rest_request(
+    p_url         => 'http://ergast.com/api/f1/seasons.json?limit=1000', 
+    p_http_method => 'GET' 
+) as result from dual;
+
+2. When and only when the query abow works it is time to setup the schema and initiate the job to start download data from ergast.com
+This is done by running the "setup_objs.sql" scipt to initiate all tables and views and the scheduler job.
+The script should only be run as the "F1_DATA" schema user.
+
+SQL> conn F1_DATA/oracle
+SQL> @setup_objs.sql
+
+Check for any errors. I recommend to use SQL*Developer to check for any invalid objects and re-compile them and also look at the
+scheduler job to make sure it runs as intended. The job will be started once every hour if everyting works so it might take some
+time before you see any data starting to be loaded into the base tables.
+
+How to use the data for analysis ?
+---------------------------------
+
+I have provided a SQL script called "queries.sql" you can use for start analysing the data. I also provided a number of materialized views that speeds up some queries due to minimize parsing time when joining different tables with each others.
+
+I'm currently building a APEX application ontop of the data but it's not yet ready but the query part might be interesting nevertheless.
+
+
