@@ -196,6 +196,9 @@ To get a graph in your terminal over popultion development in Sweden from the 60
 
 $ node sweden_graph.js
 
+There is one configuration file you need to be aware of. You can change the "resturl" value for all
+of the node apps in "config.json" so it matches your environment. 
+
 How to consume a REST service and transform JSON to Relational data for SQL analysis ?
 --------------------------------------------------------------------------------------
 
