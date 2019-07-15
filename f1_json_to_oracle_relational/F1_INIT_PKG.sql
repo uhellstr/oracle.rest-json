@@ -20,6 +20,8 @@ as
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   as
     lv_retval number;
+    lv_last_race number;
+    
   begin
 
     select round into lv_retval
@@ -31,6 +33,7 @@ as
       order by to_number(round)
     ) where rownum < 2;
 
+    
     return lv_retval;
 
   -- Season my have ended
