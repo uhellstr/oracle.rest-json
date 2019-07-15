@@ -554,29 +554,63 @@ where lp.season = 2019
                             where lp1.season = 2019
                               and lp1.round = 9);
 
----- Try to parse  and Get race date from wikipedia for a race not yet in the database
---
---select c.round,
---       c.info,
---       (select to_date(regexp_substr(substr(apex_web_service.make_rest_request
---       (
---         p_url         => c.info, 
---         p_http_method => 'GET',
---         p_wallet_path => 'file:///home/oracle/oracle_wallet/https_wallet' 
---       ),instr(apex_web_service.make_rest_request
---                (
---                  p_url         => c.info, 
---                  p_http_method => 'GET',
---                  p_wallet_path => 'file:///home/oracle/oracle_wallet/https_wallet' 
---                 ),'mw-formatted-date',1,1),100),'\d{4}-\d{2}-\d{2}', 1, 1, 'im'),'RRRR-MM-DD') 
---                 from dual) as race_date
---from v_f1_races c
---where c.season = to_char(trunc(sysdate),'RRRR')
---  and c.round in (select a.round
---                  from v_f1_races a
---                  where round not in ( select b.race
---                                       from v_f1_results b
---                                       where a.season = b.season
---                                         and a.round = b.race)
---                    and a.season = to_char(trunc(sysdate),'RRRR'));
---  
+-- How many times has Hamilton won his homerace at Silverstone ?
+
+select
+  f1r.season,
+  f1r.race,
+  f1r.racename,
+  f1r.circuitname,
+  f1r.locality,
+  f1r.country,
+  f1r.racedate,
+  f1r.pilotnr,
+  f1r.givenname,
+  f1r.familyname,
+  f1r.dateofbirth,
+  f1r.nationality,
+  f1r.constructorname,
+  f1r.constructornationality
+from
+  mv_f1_results f1r
+  where f1r.circuitid = 'silverstone'
+    and to_number(position) = 1
+    and driverid = 'hamilton'
+order  by season desc;
+
+-- Give us the winners at Silverstonde thru history and the total number of wins.
+
+select circuitname,
+       locality,
+       country,
+       number_of_wins,
+       driverid,
+       givenname,
+       familyname,
+       dateofbirth,
+       nationality
+from
+(
+select
+  f1r.circuitname,
+  f1r.locality,
+  f1r.country,
+  count(f1r.position) as number_of_wins,
+  f1r.driverid,
+  f1r.givenname,
+  f1r.familyname,
+  f1r.dateofbirth,
+  f1r.nationality
+from
+  mv_f1_results f1r
+where f1r.circuitid = 'silverstone'
+  and to_number(f1r.position) = 1
+group by f1r.circuitname,
+         f1r.locality,
+         f1r.country,
+         f1r.driverid,
+         f1r.givenname,
+         f1r.familyname,
+         f1r.dateofbirth,
+         f1r.nationality
+) order by number_of_wins desc;
