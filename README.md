@@ -153,7 +153,7 @@ Example: http://localhost:8080/ords/xepdb1/rest_data/testmodule/countrynames/
 
 If everything works you should get a JSON document in return with all the countries in the world as countrycode and countrynames.
 
-Anotther example is to check how the population growth for Sweden looked like from the 60's until around 2010. That can be
+Another example is to check how the population growth for Sweden looked like from the 60's until around 2010. That can be
 done by calling the following url:
 
 http://localhost:8080/ords/xepdb1/rest_data/testmodule/country/Sweden
@@ -209,10 +209,7 @@ Requirements:
 * Oracle Application Express version 5 or higher. 
 
 I'm a huge fan of Formula 1. I've been following it since i was a kid and the "Superswede" Ronnie Peterson was my absolute
-hero. I still belive the "Lotus 72D" is one of the most beatiful oneseater cars ever built. As a "datanerd". Note i did not 
-write databasenerd. Actually i'm more into analysing data then the database technology itself. Again as a "datanerd" I love
-to analyze data. So having a lot of F1 data for historical Formula 1 races, season, laptimes etc would be great to help me
-better understand how the teams differs from each others, how drivers perform during a season, what enginges seems to have
+hero. I still belive the "Lotus 72D" is one of the most beatiful oneseater cars ever built. As a "datanerd". i'm more into analysing data then the database technology itself. So having a lot of F1 data for historical Formula 1 races, season, laptimes etc would be great to help me better understand how the teams differs from each others, how drivers perform during a season, what enginges seems to have
 more problems then others etc.
 
 Now, thanks to https://ergast.com/mrd/ I finally found a way to be able to get hold of data and do some analysis of my favorite
@@ -235,11 +232,11 @@ How to install the basetables and start load the data from ergast ?
 
 1. First you need to run the "setup_schema.sql" script as SYS.
 
-Now before running it look at the ACL part and change the password for the F1_DATA schema if not in a isolted demo environment. 
+Now before running it look at the ACL part and change the password for the F1_DATA schema if not in a private demo environment. 
 You must have APEX installed before attempting to run the script and depending on the version of APEX you have you need to change the script to match your APEX installation schema.
 
 The script defaults to 19.1 of APEX and in that version the schemaname is APEX_190100. You must change that to match
-the version installed in your database in all places where it is used in the script.
+the version of APEX installed in your database in all places where it is used in the script.
 
 You also have to look at the DBMS_NETWORK_ACL_ADMIN.ASSIGN_ACL where you set the hostname for the server where the Oracle database is installed.
 
@@ -250,14 +247,14 @@ and to a website outside our protected environment. It is quite complex configur
 
 When done with the necessary changes you can run the script as SYS.
 
-When it is done you could try to do a call to ergast thru the SQL below to see if it works. If not you need to start to check for any errors in the setup for ACL, firewall issuest etc that could cause the callout to fail.
+When it is done you could try to do a call to ergast thru the SQL below to see if it works. If not you need to start to check for any errors in the setup for ACL, firewall issues etc that could cause the callout to fail.
 
 select apex_web_service.make_rest_request(
     p_url         => 'http://ergast.com/api/f1/seasons.json?limit=1000', 
     p_http_method => 'GET' 
 ) as result from dual;
 
-2. When and only when the query above works it is time to setup the schema and initiate the job to start download data from ergast.com
+2. When, and only when the query above works it is time to setup the schema and initiate the job to start download data from ergast.com
 This is done by running the "setup_objs.sql" scipt to initiate all tables and views and the scheduler job.
 The script should only be run as the "F1_DATA" schema user.
 
