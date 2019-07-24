@@ -47,6 +47,11 @@ BEGIN
     repeat_interval=>'FREQ=HOURLY; INTERVAL=1');
 
 
+  DBMS_SCHEDULER.set_attribute( name => '"F1_DATA"."SCH_F1_LOAD_DATA"', attribute => 'repeat_interval', value => 'FREQ=DAILY;BYTIME=220000;BYDAY=MON,TUE,WED,THU,FRI');
+
+  DBMS_SCHEDULER.set_attribute( name => '"F1_DATA"."SCH_F1_LOAD_DATA"', attribute => 'comments', value => 'Load ergast once per day');
+
+
   dbms_scheduler.create_program(program_name=>'F1_INIT_DATA',program_type=>'PLSQL_BLOCK', 
     program_action=>'BEGIN
       F1_INIT_PKG.load_json();
