@@ -1,7 +1,8 @@
 create or replace package  f1_data.f1_init_pkg as 
 
   procedure load_json;
-
+  function ret_next_race_in_cur_season return number result_cache;
+  
 end f1_init_pkg;
 /
 

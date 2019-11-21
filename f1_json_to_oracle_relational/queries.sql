@@ -393,6 +393,36 @@ group by q.season
 ) order by season desc,
            number_of_poles desc;
            
+-- Give us all polesitters and number of polepositions thru the history since about 2000 and forward
+-- Note: Ergast dont give us all data so we only see absolute correct data from 2003 and forward
+-- Means that data for Senna as an example is completly messed up and only shows 3 polepositions
+
+select *
+from
+(
+select
+ count(f1q.position) as number_of_poles,
+  f1q.driverid,
+  f1q.givenname,
+  f1q.familyname,
+  f1q.dateofbirth,
+  f1q.nationality,
+  f1q.constructor,
+  f1q.constructorname,
+  f1q.constructornationality
+from mv_f1_qualification_times f1q
+where to_number(f1q.position) = 1
+group by f1q.driverid,
+         f1q.givenname,
+         f1q.familyname,
+         f1q.dateofbirth,
+         f1q.nationality,
+         f1q.constructor,
+         f1q.constructorname,
+         f1q.constructornationality
+) order by number_of_poles desc, driverid asc;
+  
+           
 -- Who outqualifed who in the 2018 season ?
 select *
 from
