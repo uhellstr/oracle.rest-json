@@ -74,7 +74,7 @@ from
 
 --- Show all ME9 Ericssons F1 races during his career --
 select *
-from v_f1_results
+from f1_data.v_f1_results
 where pilotnr = 9
   and season >= 2014
 order by to_number(season),to_number(race) asc;
@@ -97,7 +97,7 @@ select season,
        status,
        ranking,
        fastestlap       
-from v_f1_results
+from f1_data.v_f1_results
 where locality = 'Monza'
   and driverid = 'alonso'
 order by to_number(season),to_number(race);
@@ -126,7 +126,7 @@ inner join f1_data.v_f1_races r
 on (r.season = l.season and  r.round = l.round)
 where r.season > '1999'
   and r.circuitid = 'monza'
-  and to_millis(l.laptime) = (select min(to_millis(x.laptime))
+  and to_millis(l.laptime) = (select min(f1_data.to_millis(x.laptime))
                               from f1_data.v_f1_laptimes x
                               inner join f1_data.v_f1_races y
                               on (y.season = x.season and  y.round = x.round)
@@ -160,7 +160,7 @@ where l.season > 1999
                                
 -- List info about swedish drivers in F1 history!
 select * 
-from v_f1_drivers
+from f1_data.v_f1_drivers
 where upper(nationality) = 'SWEDISH'
 order by to_date(dateofbirth,'YYYY-MM-DD') desc;
 
@@ -180,7 +180,7 @@ select eri.season,
        eri.status,
        eri.ranking,
        eri.fastestlap
-from v_f1_results eri
+from f1_data.v_f1_results eri
 where eri.driverid = 'ericsson'
   and eri.points > 0 
 order by to_number(eri.season),to_number(eri.race);
@@ -188,14 +188,14 @@ order by to_number(eri.season),to_number(eri.race);
 -- How many points in total did ME9 Ericsson get during his F1 career.
 
 select sum(eri.points) as totalcareerpoints
-from v_f1_results eri
+from f1_data.v_f1_results eri
 where eri.driverid = 'ericsson'
   and eri.points > 0;
   
 
 -- How man points did Alonso score during his F1 career
 select sum(alo.points) as totalcareerpoints
-from v_f1_results alo
+from f1_data.v_f1_results alo
 where alo.driverid = 'alonso'
   and alo.points > 0;
   
@@ -203,7 +203,7 @@ where alo.driverid = 'alonso'
 
 select r.driverid,
        median(to_number(r.position)) as median_position
-from v_f1_results r
+from f1_data.v_f1_results r
 where r.driverid = 'ericsson'
 group by r.driverid;
 
@@ -222,7 +222,7 @@ select r.driverid,
        median(to_number(r.position)) as median_position,
        (select count(b.driverid) from v_f1_results b
         where b.driverid = r.driverid) as number_of_races
-from v_f1_results r
+from f1_data.v_f1_results r
 where to_number(r.season) between 2010 and 2019              
 group by r.driverid,r.givenname,r.familyname
 ) where number_of_races > 10
@@ -242,7 +242,7 @@ select r.driverid,
        median(to_number(r.position)) as median_position,
        (select count(b.driverid) from v_f1_results b
         where b.driverid = r.driverid) as number_of_races
-from v_f1_results r
+from f1_data.v_f1_results r
 where to_number(r.season) between 2000 and 2010              
 group by r.driverid,r.givenname,r.familyname
 ) where number_of_races > 10
@@ -263,7 +263,7 @@ select r.driverid,
        median(to_number(r.position)) as median_position,
        (select count(b.driverid) from v_f1_results b
         where b.driverid = r.driverid) as number_of_races
-from v_f1_results r
+from f1_data.v_f1_results r
 where to_number(r.season) between 1990 and 2000              
 group by r.driverid,r.givenname,r.familyname
 ) where number_of_races > 10
@@ -283,7 +283,7 @@ select r.driverid,
        median(to_number(r.position)) as median_position,
        (select count(b.driverid) from v_f1_results b
         where b.driverid = r.driverid) as number_of_races
-from v_f1_results r
+from f1_data.v_f1_results r
 where to_number(r.season) between 1980 and 1990              
 group by r.driverid,r.givenname,r.familyname
 ) where number_of_races > 10
@@ -291,7 +291,7 @@ order by median_position asc,number_of_races desc;
 
 -- Get the number of races that ME9 partisipated in F1.
 select count(*) 
-from v_f1_results
+from f1_data.v_f1_results
 where driverid = 'ericsson';
 
 -- How many races did the swedish drivers partisipate in total ?
@@ -301,7 +301,7 @@ from
 select r.givenname
        ,r.familyname
        ,count(r.race) as total_races
-from v_f1_results r
+from f1_data.v_f1_results r
 where r.nationality = 'Swedish'
 group by r.givenname
          ,r.familyname
@@ -311,9 +311,9 @@ group by r.givenname
 select a.season,
        a.round,
        a.race_date
-from v_f1_seasons_race_dates a
+from f1_data.v_f1_seasons_race_dates a
 where a.round not in ( select b.race
-                     from v_f1_results b
+                     from f1_data.v_f1_results b
                      where a.season = b.season
                        and a.round = b.race)
   and a.season = to_char(trunc(sysdate),'RRRR');
@@ -327,10 +327,10 @@ select r.season,
        r.points,
        r.givenname,
        r.familyname
-from v_f1_results r
+from f1_data.v_f1_results r
 where r.season = to_char(trunc(sysdate),'RRRR')
   and r.race = (select max(race)
-                from v_f1_results
+                from f1_data.v_f1_results
                 where season = to_char(trunc(sysdate),'RRRR'))
   and r.position < 11
 order by to_number(r.position) asc;
@@ -367,8 +367,8 @@ select
   q.q2,
   q.q3
 from
-  v_f1_qualificationtimes q
-inner join v_f1_races r
+  f1_data.v_f1_qualificationtimes q
+inner join f1_data.v_f1_races r
 on q.season = r.season and q.round = r.round;
 
 -- Give us the number of poles different drivers has achived broken down per season
@@ -382,7 +382,7 @@ select q.season
        ,q.familyname
        ,q.constructorname
        ,count(position) as number_of_poles
-from mv_f1_qualification_times q
+from f1_data.mv_f1_qualification_times q
 where q.position = 1
 group by q.season
        ,q.driverid
@@ -410,7 +410,7 @@ select
   f1q.constructor,
   f1q.constructorname,
   f1q.constructornationality
-from mv_f1_qualification_times f1q
+from f1_data.mv_f1_qualification_times f1q
 where to_number(f1q.position) = 1
 group by f1q.driverid,
          f1q.givenname,
@@ -444,9 +444,9 @@ select q.season
        ,q.constructorname
        ,q.position
        ,rank() over (partition by q.season,q.round,q.constructorname order by to_number(position)) as internal_position
-from mv_f1_qualification_times q
+from f1_data.mv_f1_qualification_times q
 where q.constructor = (select distinct(q1.constructor)
-                       from mv_f1_qualification_times q1
+                       from f1_data.mv_f1_qualification_times q1
                        where q1.season = 2018
                          and q1.constructor = q.constructor)
   and q.season = 2018
@@ -497,11 +497,11 @@ select
   end as qualification_time,
   to_number(position) as starting_grid
 from
-  mv_f1_qualification_times
+  f1_data.mv_f1_qualification_times
 where to_number(season) = to_number(to_char(trunc(sysdate),'RRRR'))
   and position is not null
   and to_number(round) = (select min(to_number(round))-1
-                          from v_f1_upcoming_races
+                          from f1_data.v_f1_upcoming_races
                           where to_number(season) = to_number(to_char(trunc(sysdate),'RRRR'))
                             and to_date(race_date,'RRRR-MM-DD') >= trunc(sysdate))
 order by to_number(position) asc;
@@ -548,7 +548,7 @@ select
     else null
   end as millis 
 from
-  mv_f1_qualification_times qu
+  f1_data.mv_f1_qualification_times qu
 where to_number(qu.position) = 1
   and qu.circuitid = 'red_bull_ring'
 ) where millis = (select min(
@@ -562,7 +562,7 @@ where to_number(qu.position) = 1
                                else 9999999
                               end
                               )
-                  from mv_f1_qualification_times qa
+                  from f1_data.mv_f1_qualification_times qa
                   where qa.circuitid = 'red_bull_ring'
                     and to_number(qa.position) = 1);
                     
@@ -576,11 +576,11 @@ select lp.season
        ,lp.driverid
        ,lp.position
        ,lp.laptime
-from mv_f1_lap_times lp
+from f1_data.mv_f1_lap_times lp
 where lp.season = 2019
   and lp.round = 9
   and lp.laptimes_millis = (select min(lp1.laptimes_millis)
-                            from mv_f1_lap_times lp1
+                            from f1_data.mv_f1_lap_times lp1
                             where lp1.season = 2019
                               and lp1.round = 9);
 
@@ -602,7 +602,7 @@ select
   f1r.constructorname,
   f1r.constructornationality
 from
-  mv_f1_results f1r
+  f1_data.mv_f1_results f1r
   where f1r.circuitid = 'silverstone'
     and to_number(position) = 1
     and driverid = 'hamilton'
@@ -632,7 +632,7 @@ select
   f1r.dateofbirth,
   f1r.nationality
 from
-  mv_f1_results f1r
+  f1_data.mv_f1_results f1r
 where f1r.circuitid = 'silverstone'
   and to_number(f1r.position) = 1
 group by f1r.circuitname,
