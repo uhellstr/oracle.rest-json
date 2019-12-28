@@ -644,3 +644,37 @@ group by f1r.circuitname,
          f1r.dateofbirth,
          f1r.nationality
 ) order by number_of_wins desc;
+
+-- Get ditinct statuses
+select distinct(status)
+from f1_data.v_f1_results
+order by status;
+
+-- How many times has there been accidents in Formula 1 in race situations?
+select count(*) as number_of_accidents
+from f1_data.v_f1_results
+where lower(status) = 'accident';
+
+
+-- Drivers involved in accidents in races
+select *
+from
+(
+select r.driverid,count(*) as number_of_accidents
+from f1_data.v_f1_results r
+where lower(r.status) = 'accident'
+group by r.driverid
+) order by number_of_accidents desc;
+
+-- Fatal accident during races according to status...
+select r.*
+from f1_data.v_f1_results r
+where lower(r.status) = 'fatal accident';
+
+-- Give us the accidents that Ericsson was involved in race situation.
+
+select r.*
+from f1_data.v_f1_results r
+where lower(r.status) = 'accident'
+  and lower(r.driverid) = 'ericsson';
+
