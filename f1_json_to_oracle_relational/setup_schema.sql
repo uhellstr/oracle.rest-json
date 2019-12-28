@@ -50,7 +50,7 @@ BEGIN
 DBMS_NETWORK_ACL_ADMIN.CREATE_ACL (
 acl => 'f1_data.xml',
 description => 'Permissions to access internet',
-principal => 'APEX_190100',
+principal => 'APEX_190200',
 is_grant => TRUE,
 privilege => 'connect',
 start_date => SYSTIMESTAMP,
@@ -63,7 +63,7 @@ END;
 begin
  DBMS_NETWORK_acl_ADMIN.ADD_PRIVILEGE(
  acl => 'f1_data.xml',
- principal => 'APEX_190100',
+ principal => 'APEX_190200',
  is_grant => true,
  privilege => 'resolve',
  start_date => SYSTIMESTAMP,
@@ -112,7 +112,7 @@ DECLARE
   --l_principal VARCHAR2(20) := 'APEX_040200';
   --l_principal VARCHAR2(20) := 'APEX_050000';
   --l_principal VARCHAR2(20) := 'APEX_050100';
-  l_principal VARCHAR2(20) := 'APEX_190100';
+  l_principal VARCHAR2(20) := 'APEX_190200';
 BEGIN
   DBMS_NETWORK_ACL_ADMIN.append_host_ace (
     host       => '*', 
@@ -129,7 +129,7 @@ select * from dba_network_acls;
 --
 SELECT *
 FROM dba_network_acl_privileges
-where principal in('APEX_190100','F1_DATA');
+where principal in('APEX_190200','F1_DATA');
 --
 ---- END ACL --
 
