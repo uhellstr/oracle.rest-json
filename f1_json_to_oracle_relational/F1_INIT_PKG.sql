@@ -1,14 +1,41 @@
-create or replace package  f1_data.f1_init_pkg as 
+create or replace package f1_data.f1_init_pkg as
 
   procedure load_json;
+  procedure reset_all_data;
   function ret_next_race_in_cur_season return number result_cache;
-  
+
 end f1_init_pkg;
 /
 
-create or replace package body f1_data.f1_init_pkg 
+create or replace package body f1_data.f1_init_pkg
 as
 
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+  function return_race_date
+             (
+               p_in_season in varchar2
+               ,p_in_round in number
+             ) return date
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  -- Function: return_race_date
+  -- API: Private not published outside body
+  -- Purpose: Return the race date for a specific race in a season in date format.
+  -- Author: Ulf Hellstrom, oraminute@gmail.com
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%             
+  is 
+   lv_retval date;
+  begin
+  
+    select to_date(race_date,'RRRR-MM-DD') as race_date into lv_retval
+    from v_f1_seasons_race_dates
+    where season = p_in_season
+     and round = p_in_round;
+     
+    return lv_retval;
+    
+  end return_race_date;
+  
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
   function ret_next_race_in_cur_season
@@ -22,7 +49,7 @@ as
   as
     lv_retval number;
     lv_last_race number;
-    
+
   begin
 
     select round into lv_retval
@@ -30,11 +57,11 @@ as
     (
       select to_number(round) as round
       from v_f1_upcoming_races
-      where to_date(race_date,'YYYY-MM-DD') > trunc(sysdate)
+      --where to_date(race_date,'YYYY-MM-DD') > trunc(sysdate)
       order by to_number(round)
     ) where rownum < 2;
 
-    
+
     return lv_retval;
 
   -- Season my have ended
@@ -44,7 +71,7 @@ as
 
   end ret_next_race_in_cur_season;
 
-  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
   procedure load_f1_seasons
   is
@@ -53,19 +80,19 @@ as
   -- API: Private not published outside body
   -- Purpose: Fetch data about all seasons that F1 has done races.
   -- Author: Ulf Hellstrom, oraminute@gmail.com
-  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   begin
 
     -- Only one JSON document fetched so we reload it every time.
     delete from f1_seasons_json;
 
-    insert into f1_seasons_json( 
-      season 
-    ) values 
+    insert into f1_seasons_json(
+      season
+    ) values
     ( apex_web_service.make_rest_request
       (
-        p_url => 'http://ergast.com/api/f1/seasons.json?limit=1000', 
-        p_http_method => 'GET' 
+        p_url => 'http://ergast.com/api/f1/seasons.json?limit=1000',
+        p_http_method => 'GET'
       )
     );
     commit;
@@ -81,18 +108,18 @@ as
   -- API: Private not published outside body
   -- Purpose: Fetch all F1 drivers thru the history from ergast.com and save it in JSON format.
   -- Author: Ulf Hellstrom, oraminute@gmail.com
-  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   begin
 
     delete from f1_drivers_json;
 
-    insert into f1_drivers_json( 
-      drivers 
-    ) values 
+    insert into f1_drivers_json(
+      drivers
+    ) values
     ( apex_web_service.make_rest_request
       (
-        p_url => 'http://ergast.com/api/f1/drivers.json?limit=2000', 
-        p_http_method => 'GET' 
+        p_url => 'http://ergast.com/api/f1/drivers.json?limit=2000',
+        p_http_method => 'GET'
       )
     );
     commit;
@@ -108,16 +135,16 @@ as
   -- API: Private not published outside body
   -- Purpose: Fetch all F1 tracks ever raced on from ergast.com and save in JSON format.
   -- Author: Ulf Hellstrom, oraminute@gmail.com
-  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   begin
 
     delete from f1_tracks_json;
-    insert into f1_tracks_json( 
+    insert into f1_tracks_json(
       tracks
-    ) values 
+    ) values
     ( apex_web_service.make_rest_request
       (
-        p_url => 'http://ergast.com/api/f1/circuits.json?limit=1000', 
+        p_url => 'http://ergast.com/api/f1/circuits.json?limit=1000',
         p_http_method => 'GET'
       )
     );
@@ -133,7 +160,7 @@ as
   -- API: Private not published outside body
   -- Purpose: Fetch all historic and for current season planned F1 races from ergast.com and save in JSON format.
   -- Author: Ulf Hellstrom, oraminute@gmail.com
-  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   is
 
     url clob := 'http://ergast.com/api/f1/{YEAR}.json?limit=1000';
@@ -147,7 +174,7 @@ as
     procedure get_races(
       p_in_year in number,
       p_in_url in clob
-    ) 
+    )
     is
 
       lv_count number;
@@ -163,17 +190,17 @@ as
         insert into f1_race_json(
           year
           ,race
-        ) values 
+        ) values
         ( p_in_year
          ,apex_web_service.make_rest_request
            (
-              p_url => p_in_url, 
+              p_url => p_in_url,
               p_http_method => 'GET'
 
            )
-         );   
+         );
         commit;
-      end if;  
+      end if;
     end get_races;
 
   begin
@@ -193,13 +220,15 @@ as
   -- API: Private not published outside body
   -- Purpose: Fetch all the results of all historic F1 races and save it in JSON format.
   -- Author: Ulf Hellstrom, oraminute@gmail.com
-  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   is
 
     url clob := 'http://ergast.com/api/f1/{YEAR}/{ROUND}/results.json';
     tmp clob;
     calling_url clob;
     lv_next_round_nr number;
+    lv_max_round number;
+    last_season_race_date date;
 
     cursor cur_get_f1_races is
     select to_number(season) as season
@@ -229,36 +258,35 @@ as
           year
           ,round
           ,result
-        ) values 
+        ) values
           ( p_in_year
               ,p_in_round
               ,apex_web_service.make_rest_request
                (
-                  p_url => p_in_url, 
-                  p_http_method => 'GET' 
+                  p_url => p_in_url,
+                  p_http_method => 'GET'
                )
           );
-        commit;  
-      end if;  
+        commit;
+      end if;
 
     end insert_results;
 
   begin
 
-    -- Some logic is needed to not try to load races not yet raced so we for current season
-    -- we only try to load the results for races that has been raced :-)
-    for rec in cur_get_f1_races loop
-      if rec.season = to_number(to_char(sysdate,'RRRR')) then      
-        lv_next_round_nr := ret_next_race_in_cur_season;
-      else
-       lv_next_round_nr := 999;
-      end if;
-      if rec.round < lv_next_round_nr then
-        tmp := replace(url,'{YEAR}',rec.season);
-        calling_url := replace(tmp,'{ROUND}',rec.round);
-        insert_results(rec.season,rec.round,calling_url);
-      end if;
-    end loop;
+      for rec in cur_get_f1_races loop
+
+        -- check that we have a race that has finished before trying to load results
+        if  return_race_date(
+               p_in_season => rec.season
+               ,p_in_round => to_number(rec.round)) <= trunc(sysdate-5) 
+        then
+          tmp := replace(url,'{YEAR}',rec.season);
+          calling_url := replace(tmp,'{ROUND}',rec.round);
+          insert_results(rec.season,rec.round,calling_url);
+        end if;
+      end loop;
+      
   end load_f1_raceresults;
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -270,17 +298,17 @@ as
   -- API: Private not published outside body
   -- Purpose: Fetch all F1 constructors ever raced on from ergast.com and save in JSON format.
   -- Author: Ulf Hellstrom, oraminute@gmail.com
-  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   begin
     delete from f1_constructors_json;
-    insert into f1_constructors_json( 
+    insert into f1_constructors_json(
       constructor
-    ) values 
+    ) values
     ( apex_web_service.make_rest_request
       (
-        p_url => 'http://ergast.com/api/f1/constructors.json?limit=1000', 
+        p_url => 'http://ergast.com/api/f1/constructors.json?limit=1000',
         p_http_method => 'GET'
-        --p_wallet_path => 'file:///home/oracle/https_wallet' 
+        --p_wallet_path => 'file:///home/oracle/https_wallet'
       )
     );
     commit;
@@ -294,7 +322,7 @@ as
   -- API: Private not published outside body
   -- Purpose: Fetch the last restults in points for all drivers for historic and current season and save in JSON format
   -- Author: Ulf Hellstrom, oraminute@gmail.com
-  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   is
     url clob := 'http://ergast.com/api/f1/{YEAR}/driverStandings.json';
     calling_url clob;
@@ -317,7 +345,7 @@ as
      if p_in_year = to_number(to_char(trunc(sysdate),'RRRR')) then
        lv_count := 0;
        delete from f1_driverstandings_json where year = to_number(to_char(trunc(sysdate),'RRRR'));
-     else  
+     else
        -- check if results for year already loaded. if then skip to load it.
        select count(year) into lv_count
        from f1_driverstandings_json
@@ -328,11 +356,11 @@ as
        insert into f1_driverstandings_json(
           year
           ,driverstanding
-        ) values 
+        ) values
         ( p_in_year
           ,apex_web_service.make_rest_request
            (
-              p_url => p_in_url, 
+              p_url => p_in_url,
               p_http_method => 'GET'
 
            )
@@ -346,7 +374,7 @@ as
       calling_url := replace(url,'{YEAR}',rec.season);
       --dbms_output.put_line(calling_url);
       insert_results(rec.season,calling_url);
-    end loop;  
+    end loop;
   end load_f1_driverstandings;
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -357,7 +385,7 @@ as
   -- API: Private not published outside body
   -- Purpose: Fetch all F1 historic and current seasons last or final result from ergast.com and save in JSON format.
   -- Author: Ulf Hellstrom, oraminute@gmail.com
-  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   is
     url clob := 'http://ergast.com/api/f1/{YEAR}/constructorStandings.json?limit=100';
     calling_url clob;
@@ -380,7 +408,7 @@ as
      if p_in_year = to_number(to_char(trunc(sysdate),'RRRR')) then
        lv_count := 0;
        delete from f1_constructorstandings_json where year = to_number(to_char(trunc(sysdate),'RRRR'));
-     else  
+     else
        -- check if results for year already loaded. if then skip to load it.
        select count(year) into lv_count
        from f1_constructorstandings_json
@@ -391,11 +419,11 @@ as
        insert into f1_constructorstandings_json(
           year
           ,constructorstandings
-        ) values 
+        ) values
         ( p_in_year
          ,apex_web_service.make_rest_request
            (
-              p_url => p_in_url, 
+              p_url => p_in_url,
               p_http_method => 'GET'
 
            )
@@ -408,7 +436,7 @@ as
     for rec in cur_get_f1_seasons loop
       calling_url := replace(url,'{YEAR}',rec.season);
       insert_results(rec.season,calling_url);
-    end loop;   
+    end loop;
   end load_f1_constructorstandings;
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -419,7 +447,7 @@ as
   -- API: Private not published outside body
   -- Purpose: Fetch all racedats for historic and current season ever raced from ergast.com and save in JSON format.
   -- Author: Ulf Hellstrom, oraminute@gmail.com
-  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   is
 
     url clob := 'http://ergast.com/api/f1/{YEAR}.json?limit=1000';
@@ -448,11 +476,11 @@ as
        insert into f1_seasons_race_dates(
           year
           ,race_date
-        ) values 
+        ) values
         ( p_in_year
          ,apex_web_service.make_rest_request
            (
-              p_url => p_in_url, 
+              p_url => p_in_url,
               p_http_method => 'GET'
 
            )
@@ -478,7 +506,7 @@ as
   -- API: Private not published outside body
   -- Purpose: Fetch all F1 qualitimes historicly from 1994 and forward and store in JSON format
   -- Author: Ulf Hellstrom, oraminute@gmail.com
-  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   is
 
     url clob := 'http://ergast.com/api/f1/{YEAR}/{ROUND}/qualifying.json?limit=1000';
@@ -490,15 +518,15 @@ as
     cursor cur_get_season_year is
     select to_number(season) as season
     from v_f1_season
-    where to_number(season) > 1993;  
+    where to_number(season) > 1993;
 
     -- inline
     procedure get_qualitimes
     (
         p_in_year in number
         ,p_in_round in number
-        ,p_in_url clob   
-    ) 
+        ,p_in_url clob
+    )
     is
 
       lv_count number;
@@ -517,57 +545,66 @@ as
           year
           ,round
           ,qualification
-        ) values 
-        ( 
+        ) values
+        (
           p_in_year
           ,p_in_round
           ,apex_web_service.make_rest_request
           (
-              p_url => p_in_url, 
+              p_url => p_in_url,
               p_http_method => 'GET'
 
            )
          );
-       commit;     
+       commit;
      end if;
 
     end get_qualitimes;
 
   begin
 
-   for rec in cur_get_season_year loop 
+
+   for rec in cur_get_season_year loop
+
 
       -- Special handling for current season since not all races are done yeat
-      if rec.season < to_number(to_char(sysdate,'RRRR')) then
-        select max(to_number(round)) into lv_number_of_races
-        from v_f1_races
-        where season = rec.season;
-      else
-        lv_number_of_races := ret_next_race_in_cur_season - 1;
-      end if;  
-
-      if lv_number_of_races > 0 then
+ 
+     select max(to_number(round)) into lv_number_of_races
+     from v_f1_races
+     where season = rec.season;
+ 
+     if lv_number_of_races > 0 then
 
         for i in 1..lv_number_of_races loop
-          tmp_url := replace(url,'{YEAR}',rec.season);
-          calling_url := replace(tmp_url,'{ROUND}',i);                  
-          get_qualitimes(rec.season,i,calling_url);
-        end loop; --lv_number_of_races     
         
-      end if; -- Has the season started yeat? 
-   end loop;         
-  end load_f1_qualitimes;  
+          -- Is the race finished ?
+          if return_race_date(
+               p_in_season => rec.season
+               ,p_in_round => i) <= trunc(sysdate-5) 
+          then
+            tmp_url := replace(url,'{YEAR}',rec.season);
+            calling_url := replace(tmp_url,'{ROUND}',i);
+            get_qualitimes(rec.season,i,calling_url);
+          end if;
+          
+        end loop; -- round in season
+
+     end if; -- Has the season started yeat?
+     
+   end loop;
+   
+  end load_f1_qualitimes;
 
 
-  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-  procedure load_f1_laptimes 
+  procedure load_f1_laptimes
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   -- Procedure: load_f1_laptimes (Heavylifter)
   -- API: Private not published outside body
   -- Purpose: Fetch all F1 laptimes historicly from 1996 and forward and store in JSON format
   -- Author: Ulf Hellstrom, oraminute@gmail.com
-  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   is
     url clob := 'http://ergast.com/api/f1/{YEAR}/{ROUND}/laps/{LAP}.json?limit=1000';
     calling_url clob;
@@ -575,12 +612,13 @@ as
     tmp1_url clob;
     lv_number_of_races number;
     lv_number_of_laps number;
-    lv_next_round_nr number; 
+    lv_next_round_nr number;
 
     cursor cur_get_season_year is
     select to_number(season) as season
     from v_f1_season
-    where to_number(season) > 1995;
+    where to_number(season) > 1995
+      and to_number(season) <= to_number(trunc(to_char(sysdate,'RRRR')));
 
     --inline
     procedure get_laps(
@@ -588,7 +626,7 @@ as
         p_in_round in number,
         p_in_lap in number,
         p_in_url clob
-   ) 
+   )
    is
 
       lv_count number;
@@ -601,78 +639,79 @@ as
         and round = p_in_round
         and lap = p_in_lap;
 
-      if lv_count = 0 then   
+      if lv_count = 0 then
         insert into f1_laptimes_json(
           year
           ,round
           ,lap
-          ,laptimes 
-        ) values 
+          ,laptimes
+        ) values
         ( p_in_year,
           p_in_round,
           p_in_lap,
           apex_web_service.make_rest_request
             (
-              p_url => p_in_url, 
-              p_http_method => 'GET'  
+              p_url => p_in_url,
+              p_http_method => 'GET'
             )
-        );   
+        );
         commit;
       end if;
      end get_laps;
 
   begin
 
-    for rec in cur_get_season_year loop 
+    for rec in cur_get_season_year loop
 
       -- Special handling for current season since not all races are done yeat
-      if rec.season < to_number(to_char(sysdate,'RRRR')) then
-        select max(to_number(round)) into lv_number_of_races
-        from v_f1_races
-        where season = rec.season;
-      else
-        lv_number_of_races := ret_next_race_in_cur_season - 1;
-      end if;  
+
+      select max(to_number(round)) into lv_number_of_races
+      from v_f1_races
+      where season = rec.season;
 
       if lv_number_of_races > 0 then
 
         for i in 1..lv_number_of_races loop
+        
           begin
-            select to_number(to_number(laps)) 
+          
+            select to_number(to_number(laps))
             into lv_number_of_laps
             from v_f1_results
             where to_number(position) = 1
               and to_number(season) = rec.season
-              and to_number(race) = i; 
+              and to_number(race) = i;
 
-            for j in 1..lv_number_of_laps loop
-                -- In current season do not try to load races not yet raced!
-                if rec.season = to_number(to_char(sysdate,'RRRR')) then
-                  lv_next_round_nr := ret_next_race_in_cur_season;
-                else
-                  lv_next_round_nr := 999;
-                end if;
-                if i < lv_next_round_nr then
+               -- In current season do not try to load races not yet raced!
+            if return_race_date
+                   (
+                     p_in_season => rec.season
+                    ,p_in_round => i) <= trunc(sysdate-5) 
+            then 
+              for j in 1..lv_number_of_laps loop
                   tmp_url := replace(url,'{YEAR}',rec.season);
-                  tmp1_url := replace(tmp_url,'{ROUND}',i);      
-                  calling_url := replace(tmp1_url,'{LAP}',j);            
+                  tmp1_url := replace(tmp_url,'{ROUND}',i);
+                  calling_url := replace(tmp1_url,'{LAP}',j);
                   get_laps(rec.season,i,j,calling_url);
-                end if;
-            end loop;
+              end loop;
+            end if;  
           exception -- special handling if runned same date as race is and no data loaded on ergast.com yet!
              when no_data_found then
                 delete from f1_raceresults_json
                 where to_number(year) = rec.season
                   and to_number(round) = i;
                   commit;
-          end;
+          end;  
+          
         end loop;
-      end if; -- Has the season started yeat?
-    end loop;
+      end if; -- lv_number_of_races 
+    end loop; -- cursor
 
   end load_f1_laptimes;
 
-  procedure refresh_mviews 
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+  procedure refresh_mviews
   is
   begin
     DBMS_SNAPSHOT.REFRESH( '"F1_DATA"."MV_F1_LAP_TIMES"','C');
@@ -681,21 +720,40 @@ as
   end refresh_mviews;
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  procedure reset_all_data 
+  is
+  begin
+    delete from f1_constructors_json;
+    delete from  f1_constructorstandings_json;
+    delete from  f1_drivers_json;
+    delete from  f1_driverstandings_json;
+    delete from f1_laptimes_json;
+    delete from f1_qualification_json;
+    delete from f1_race_json;
+    delete from f1_raceresults_json;
+    delete from f1_seasons_json;
+    delete from f1_seasons_race_dates;
+    delete from f1_tracks_json;
+    commit;
+  end reset_all_data;
+  
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   -- main published API starts here.
-  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+  --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   procedure load_json as
   begin
     load_f1_seasons;
+    load_f1_seasons_racedates;
     load_f1_drivers;
     load_f1_tracks;
     load_f1_races;
+    load_f1_qualitimes;
+    load_f1_laptimes;    
     load_f1_raceresults;
     load_f1_constructors;
     load_f1_driverstandings;
     load_f1_constructorstandings;
-    load_f1_seasons_racedates;
-    load_f1_qualitimes;
-    load_f1_laptimes;
     refresh_mviews;
   end load_json;
 
