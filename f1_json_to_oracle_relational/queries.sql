@@ -99,6 +99,40 @@ from
 ) group by driverid,givenname,familyname,nationality
 ) order by championships_won desc;
 
+-- Give us the constructor champiions over the years
+
+select
+  c.season,
+  c.race,
+  c.position,
+  c.points,
+  c.wins,
+  c.constructorid,
+  c.constructorinfo,
+  c.constructorname,
+  c.constructornationality
+from
+  f1_data.v_f1_constructorstandings c
+where to_number(c.race) = (select max(to_number(d.round))
+                           from f1_data.v_f1_races d
+                           where to_number(d.season) = to_number(c.season))
+  and to_number(c.position) = 1
+  and c.season <= (select season -- Is current season finished yet?
+                       from
+                       (
+                         select to_date(r.race_date,'RRRR-MM-DD') as race_date
+                                ,case 
+                                   when r.race_date < trunc(sysdate) then to_char(trunc(sysdate),'RRRR')
+                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
+                                   else '1900'
+                                 end as season
+                         from f1_data.v_f1_seasons_race_dates r
+                         where r.season = c.season
+                           and to_number(r.round) in (select max(to_number(rd.round)) from f1_data.v_f1_seasons_race_dates rd
+                                                      where rd.season  = r.season)
+                        ))
+order by to_number(c.season) desc;
+
 --- Show all ME9 Ericssons F1 races during his career --
 select *
 from f1_data.v_f1_results
