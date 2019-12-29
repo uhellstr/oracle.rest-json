@@ -153,7 +153,7 @@ inner join f1_data.v_f1_races r
 on (r.season = l.season and  r.round = l.round)
 where r.season > '1999'
   and r.circuitid = 'monza'
-  and to_millis(l.laptime) = (select min(f1_data.to_millis(x.laptime))
+  and f1_data.to_millis(l.laptime) = (select min(f1_data.to_millis(x.laptime))
                               from f1_data.v_f1_laptimes x
                               inner join f1_data.v_f1_races y
                               on (y.season = x.season and  y.round = x.round)
@@ -247,7 +247,7 @@ select r.driverid,
        r.givenname,
        r.familyname,
        median(to_number(r.position)) as median_position,
-       (select count(b.driverid) from v_f1_results b
+       (select count(b.driverid) from f1_data.v_f1_results b
         where b.driverid = r.driverid) as number_of_races
 from f1_data.v_f1_results r
 where to_number(r.season) between 2010 and 2019              
@@ -356,9 +356,9 @@ select r.season,
        r.familyname
 from f1_data.v_f1_results r
 where r.season = to_char(trunc(sysdate),'RRRR')
-  and r.race = (select max(race)
-                from f1_data.v_f1_results
-                where season = to_char(trunc(sysdate),'RRRR'))
+  and to_number(r.race) = (select max(to_number(race))
+                           from f1_data.v_f1_results
+                           where season = to_char(trunc(sysdate),'RRRR'))
   and r.position < 11
 order by to_number(r.position) asc;
 
@@ -394,7 +394,7 @@ select
   q.q2,
   q.q3
 from
-  f1_data.v_f1_qualificationtimes q
+  f1_data.mv_f1_qualification_times q
 inner join f1_data.v_f1_races r
 on q.season = r.season and q.round = r.round;
 
