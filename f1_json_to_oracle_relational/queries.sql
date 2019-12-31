@@ -164,37 +164,7 @@ where locality = 'Monza'
 order by to_number(season),to_number(race);
 
 -- What is the fastest laptime set on Monza on the current layout on the track from 2000 and forward ?
--- Here we query the json data directly (e.g we parse the json data and do the join) quite timeconsuming.
 
-select 
-    l.season,
-    l.round,
-    l.info,
-    l.racename,
-    r.circuitid,
-    l.url,
-    r.circuitname,
-    l.race_date,
-    l.race_time,
-    l.lap_number,
-    l.driverid,
-    l.position,
-    l.laptime,
-    to_millis(l.laptime) as millis
-from
-    f1_data.v_f1_laptimes l
-inner join f1_data.v_f1_races r
-on (r.season = l.season and  r.round = l.round)
-where r.season > '1999'
-  and r.circuitid = 'monza'
-  and f1_data.to_millis(l.laptime) = (select min(f1_data.to_millis(x.laptime))
-                              from f1_data.v_f1_laptimes x
-                              inner join f1_data.v_f1_races y
-                              on (y.season = x.season and  y.round = x.round)
-                              where y.season > '1999'
-                               and y.circuitid = 'monza');
-                              
--- The same query but now we use the MV view instead !!
 select 
     l.season,
     l.round,
