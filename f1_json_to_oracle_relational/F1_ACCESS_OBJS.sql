@@ -1,0 +1,16 @@
+create synonym f1_access.S_MV_F1_LAP_TIMES for f1_data.MV_F1_LAP_TIMES;
+create synonym f1_access.S_MV_F1_QUALIFICATION_TIMES for f1_data.MV_F1_QUALIFICATION_TIMES;
+create synonym f1_access.S_MV_F1_RESULTS for f1_data.MV_F1_RESULTS;
+create synonym f1_access.S_V_F1_CONSTRUCTORS for f1_data.V_F1_CONSTRUCTORS;
+create synonym f1_access.S_V_F1_CONSTRUCTORSTANDINGS for f1_data.V_F1_CONSTRUCTORSTANDINGS;
+create synonym f1_access.S_V_F1_DRIVERS for f1_data.V_F1_DRIVERS;
+create synonym f1_access.S_V_F1_DRIVERSTANDINGS for f1_data.V_F1_DRIVERSTANDINGS;
+create synonym f1_access.S_V_F1_LAPTIMES for f1_data.V_F1_LAPTIMES;
+create synonym f1_access.S_V_F1_QUALIFICATIONTIMES for f1_data.V_F1_QUALIFICATIONTIMES;
+create synonym f1_access.S_V_F1_RACES for f1_data.V_F1_RACES;
+create synonym f1_access.S_V_F1_RESULTS for f1_data.V_F1_RESULTS;
+create synonym f1_access.S_V_F1_LAST_RACE_RESULTS for f1_data.V_F1_LAST_RACE_RESULTS;
+create synonym f1_access.S_V_F1_SEASON for f1_data.V_F1_SEASON;
+create synonym f1_access.S_V_F1_SEASONS_RACE_DATES for f1_data.V_F1_SEASONS_RACE_DATES;
+create synonym f1_access.S_V_F1_TRACKS for f1_data.V_F1_TRACKS;
+create synonym f1_access.S_V_F1_UPCOMING_RACES for f1_data.V_F1_UPCOMING_RACES;
