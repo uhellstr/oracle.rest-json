@@ -25,3 +25,13 @@ f1_data_driver_images table in your own application. You also will get
 the images downloaded as files in wikif1data/images catalog.
 
 See the source file for other python libraries you might need to install with pip.
+
+Example how to run:
+
+python3 wikif1data.py
+Pleas give hostname or scan-listener name: localhost
+Give the TNS-string for DB to connect to: PDBUTV1
+Oracle Username: sys
+Please give sys password:
+Give Listener port default (1521): 1522
+
