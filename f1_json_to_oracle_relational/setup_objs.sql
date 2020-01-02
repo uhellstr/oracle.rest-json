@@ -1,7 +1,14 @@
 @F1_DATA_TBS.sql
+@F1_LOGIK_GRANTS.sql
+@F1_DATA_FORVALT_ROLE.sql
+grant F1_DATA_FORVALT_ROLE to F1_ACCESS ;
+grant F1_DATA_FORVALT_ROLE to F1_LOGIK ;
+ALTER USER "F1_ACCESS" DEFAULT ROLE CONNECT,F1_DATA_FORVALT_ROLE;
+ALTER USER "F1_LOGIK" DEFAULT ROLE "CONNECT","F1_DATA_FORVALT_ROLE";
 @F1_INIT_PKG.sql
+@F1_ACCESS_OBJS.sql
 
-create or replace function  to_millis 
+create or replace function f1_logik.to_millis 
 (
     p_in_laptime in varchar2
 ) return number 
@@ -30,3 +37,4 @@ begin
 
 end to_millis;
 /
+@F1_DATA_SCHEDULER.sql
