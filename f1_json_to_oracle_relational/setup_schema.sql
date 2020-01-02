@@ -15,6 +15,53 @@ BEGIN
 END;
 /
 
+DECLARE
+  lv_count number := 0;
+BEGIN
+
+  SELECT COUNT(*) 
+  INTO lv_count
+  FROM DBA_USERS
+  WHERE USERNAME = 'F1_LOGIK';
+
+  IF lv_count > 0 THEN      
+    EXECUTE IMMEDIATE 'DROP USER F1_LOGIK CASCADE';
+  END IF;
+
+END;
+/
+
+DECLARE
+  lv_count number := 0;
+BEGIN
+
+  SELECT COUNT(*) 
+  INTO lv_count
+  FROM DBA_ROLES
+  WHERE ROLE = 'F1_DATA_FORVALT_ROLE';
+
+  IF lv_count > 0 THEN      
+    EXECUTE IMMEDIATE 'DROP ROLE F1_DATA_FORVALT_ROLE';
+  END IF;
+
+END;
+/
+
+DECLARE
+  lv_count number := 0;
+BEGIN
+
+  SELECT COUNT(*) 
+  INTO lv_count
+  FROM DBA_USERS
+  WHERE USERNAME = 'F1_ACCESS';
+
+  IF lv_count > 0 THEN      
+    EXECUTE IMMEDIATE 'DROP USER F1_ACCESS CASCADE';
+  END IF;
+
+END;
+/
 -- USER SQL
 CREATE USER "F1_DATA" IDENTIFIED BY "oracle"  
 DEFAULT TABLESPACE "USERS"
@@ -32,25 +79,61 @@ GRANT CREATE TRIGGER TO "F1_DATA" ;
 GRANT CREATE VIEW TO "F1_DATA" ;
 GRANT CREATE SESSION TO "F1_DATA" ;
 GRANT CREATE TABLE TO "F1_DATA" ;
-GRANT CREATE TYPE TO "F1_DATA" ;
-GRANT EXECUTE ANY PROGRAM TO "F1_DATA" ;
 GRANT CREATE SEQUENCE TO "F1_DATA" ;
-GRANT CREATE PROCEDURE TO "F1_DATA" ;
 GRANT CREATE MATERIALIZED VIEW TO "F1_DATA";
-GRANT SELECT ON DBA_TABLES TO "F1_DATA";
-GRANT CREATE JOB TO "F1_DATA";
-GRANT CREATE RULE TO "F1_DATA";
-GRANT CREATE RULE SET TO "F1_DATA";
 GRANT CREATE EVALUATION CONTEXT TO "F1_DATA";
 
--- USERSCHEMA F1_DATA
+
+-- USERSCHEMA F1_LOGIK
+
+-- USER SQL
+CREATE USER "F1_LOGIK" IDENTIFIED BY "oracle"  
+DEFAULT TABLESPACE "USERS"
+TEMPORARY TABLESPACE "TEMP";
+
+-- QUOTAS
+ALTER USER "F1_LOGIK" QUOTA UNLIMITED ON "USERS";
+
+-- ROLES
+GRANT "CONNECT" TO "F1_LOGIK" ;
+ALTER USER "F1_LOGIK" DEFAULT ROLE "CONNECT";
+
+GRANT CREATE SESSION TO "F1_LOGIK" ;
+GRANT CREATE TYPE TO "F1_LOGIK" ;
+GRANT EXECUTE ANY PROGRAM TO "F1_LOGIK" ;
+GRANT CREATE PROCEDURE TO "F1_LOGIK" ;
+GRANT SELECT ON DBA_TABLES TO "F1_LOGIK";
+GRANT CREATE JOB TO "F1_LOGIK";
+GRANT CREATE RULE TO "F1_LOGIK";
+GRANT CREATE RULE SET TO "F1_LOGIK";
+GRANT CREATE EVALUATION CONTEXT TO "F1_LOGIK";
+grant execute on dbms_refresh to f1_logik;
+grant ALTER ANY MATERIALIZED VIEW to f1_logik;
+
+-- USERSCHEMA F1_ACCESS
+
+-- USER SQL
+CREATE USER "F1_ACCESS" IDENTIFIED BY "oracle"  
+DEFAULT TABLESPACE "USERS"
+TEMPORARY TABLESPACE "TEMP";
+
+-- QUOTAS
+ALTER USER "F1_ACCESS" QUOTA UNLIMITED ON "USERS";
+
+-- ROLES
+GRANT "CONNECT" TO "F1_ACCESS" ;
+ALTER USER "F1_ACCESS" DEFAULT ROLE "CONNECT";
+
+GRANT CREATE SESSION TO "F1_ACCESS" ;
+GRANT CREATE VIEW TO "F1_ACCESS" ;
+GRANT CREATE SYNONYM TO "F1_ACCESS" ;
 
 -- ACL must run as SYS -
 BEGIN
 DBMS_NETWORK_ACL_ADMIN.CREATE_ACL (
 acl => 'f1_data.xml',
 description => 'Permissions to access internet',
-principal => 'APEX_190100',
+principal => 'APEX_190200',
 is_grant => TRUE,
 privilege => 'connect',
 start_date => SYSTIMESTAMP,
@@ -63,7 +146,7 @@ END;
 begin
  DBMS_NETWORK_acl_ADMIN.ADD_PRIVILEGE(
  acl => 'f1_data.xml',
- principal => 'APEX_190100',
+ principal => 'APEX_190200',
  is_grant => true,
  privilege => 'resolve',
  start_date => SYSTIMESTAMP,
@@ -77,7 +160,7 @@ begin
 begin
  DBMS_NETWORK_acl_ADMIN.ADD_PRIVILEGE(
  acl => 'f1_data.xml',
- principal => 'F1_DATA',
+ principal => 'F1_LOGIK',
  is_grant => true,
  privilege => 'connect',
  start_date => SYSTIMESTAMP,
@@ -90,7 +173,7 @@ begin
 begin
  DBMS_NETWORK_acl_ADMIN.ADD_PRIVILEGE(
  acl => 'f1_data.xml',
- principal => 'F1_DATA',
+ principal => 'F1_LOGIK',
  is_grant => true,
  privilege => 'resolve',
  start_date => SYSTIMESTAMP,
@@ -112,7 +195,7 @@ DECLARE
   --l_principal VARCHAR2(20) := 'APEX_040200';
   --l_principal VARCHAR2(20) := 'APEX_050000';
   --l_principal VARCHAR2(20) := 'APEX_050100';
-  l_principal VARCHAR2(20) := 'APEX_190100';
+  l_principal VARCHAR2(20) := 'APEX_190200';
 BEGIN
   DBMS_NETWORK_ACL_ADMIN.append_host_ace (
     host       => '*', 
@@ -129,7 +212,7 @@ select * from dba_network_acls;
 --
 SELECT *
 FROM dba_network_acl_privileges
-where principal in('APEX_190100','F1_DATA');
+where principal in('APEX_190200','F1_LOGIK');
 --
 ---- END ACL --
 
