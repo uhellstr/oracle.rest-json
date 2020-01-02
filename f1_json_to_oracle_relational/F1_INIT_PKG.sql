@@ -1,4 +1,4 @@
-create or replace package f1_data.f1_init_pkg as
+create or replace package f1_logik.f1_init_pkg as
 
   procedure load_json;
   procedure reset_all_data;
@@ -7,7 +7,7 @@ create or replace package f1_data.f1_init_pkg as
 end f1_init_pkg;
 /
 
-create or replace package body f1_data.f1_init_pkg
+create or replace package body f1_logik.f1_init_pkg
 as
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -26,16 +26,16 @@ as
   is 
    lv_retval date;
   begin
-  
+
     select to_date(race_date,'RRRR-MM-DD') as race_date into lv_retval
-    from v_f1_seasons_race_dates
+    from f1_data.v_f1_seasons_race_dates
     where season = p_in_season
      and round = p_in_round;
-     
+
     return lv_retval;
-    
+
   end return_race_date;
-  
+
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
   function ret_next_race_in_cur_season
@@ -56,7 +56,7 @@ as
     from
     (
       select to_number(round) as round
-      from v_f1_upcoming_races
+      from f1_data.v_f1_upcoming_races
       --where to_date(race_date,'YYYY-MM-DD') > trunc(sysdate)
       order by to_number(round)
     ) where rownum < 2;
@@ -84,9 +84,9 @@ as
   begin
 
     -- Only one JSON document fetched so we reload it every time.
-    delete from f1_seasons_json;
+    delete from f1_data.f1_seasons_json;
 
-    insert into f1_seasons_json(
+    insert into f1_data.f1_seasons_json(
       season
     ) values
     ( apex_web_service.make_rest_request
@@ -111,9 +111,9 @@ as
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   begin
 
-    delete from f1_drivers_json;
+    delete from f1_data.f1_drivers_json;
 
-    insert into f1_drivers_json(
+    insert into f1_data.f1_drivers_json(
       drivers
     ) values
     ( apex_web_service.make_rest_request
@@ -138,8 +138,8 @@ as
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   begin
 
-    delete from f1_tracks_json;
-    insert into f1_tracks_json(
+    delete from f1_data.f1_tracks_json;
+    insert into f1_data.f1_tracks_json(
       tracks
     ) values
     ( apex_web_service.make_rest_request
@@ -168,7 +168,7 @@ as
 
     cursor cur_get_season_year is
     select f1.season
-    from v_f1_season f1;
+    from f1_data.v_f1_season f1;
 
     --inline
     procedure get_races(
@@ -183,11 +183,11 @@ as
 
       -- check if year is already loaded, if then skip
       select count(year) into lv_count
-      from f1_race_json
+      from f1_data.f1_race_json
       where year = p_in_year;
 
       if lv_count = 0 then
-        insert into f1_race_json(
+        insert into f1_data.f1_race_json(
           year
           ,race
         ) values
@@ -233,7 +233,7 @@ as
     cursor cur_get_f1_races is
     select to_number(season) as season
            ,to_number(round) as round
-    from v_f1_races;
+    from f1_data.v_f1_races;
 
     -- inline
     procedure insert_results
@@ -249,12 +249,12 @@ as
     begin
 
       select count(year) into lv_count
-      from f1_raceresults_json
+      from f1_data.f1_raceresults_json
       where year = p_in_year
         and round = p_in_round;
 
       if lv_count = 0 then
-        insert into f1_raceresults_json(
+        insert into f1_data.f1_raceresults_json(
           year
           ,round
           ,result
@@ -286,7 +286,7 @@ as
           insert_results(rec.season,rec.round,calling_url);
         end if;
       end loop;
-      
+
   end load_f1_raceresults;
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -300,8 +300,8 @@ as
   -- Author: Ulf Hellstrom, oraminute@gmail.com
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   begin
-    delete from f1_constructors_json;
-    insert into f1_constructors_json(
+    delete from f1_data.f1_constructors_json;
+    insert into f1_data.f1_constructors_json(
       constructor
     ) values
     ( apex_web_service.make_rest_request
@@ -329,7 +329,7 @@ as
 
     cursor cur_get_f1_seasons is
     select season
-    from v_f1_season;
+    from f1_data.v_f1_season;
 
     -- inline
     procedure insert_results
@@ -344,16 +344,16 @@ as
      -- Reload current years driverstandings since it will be updated until end of season.
      if p_in_year = to_number(to_char(trunc(sysdate),'RRRR')) then
        lv_count := 0;
-       delete from f1_driverstandings_json where year = to_number(to_char(trunc(sysdate),'RRRR'));
+       delete from f1_data.f1_driverstandings_json where year = to_number(to_char(trunc(sysdate),'RRRR'));
      else
        -- check if results for year already loaded. if then skip to load it.
        select count(year) into lv_count
-       from f1_driverstandings_json
+       from f1_data.f1_driverstandings_json
        where year = p_in_year;
      end if;
 
      if lv_count = 0 then
-       insert into f1_driverstandings_json(
+       insert into f1_data.f1_driverstandings_json(
           year
           ,driverstanding
         ) values
@@ -392,7 +392,7 @@ as
 
     cursor cur_get_f1_seasons is
     select to_number(season) as season
-    from v_f1_season;
+    from f1_data.v_f1_season;
 
     -- inline
     procedure insert_results
@@ -407,16 +407,16 @@ as
      -- Reload current years constructortandings since the update until end of season.
      if p_in_year = to_number(to_char(trunc(sysdate),'RRRR')) then
        lv_count := 0;
-       delete from f1_constructorstandings_json where year = to_number(to_char(trunc(sysdate),'RRRR'));
+       delete from f1_data.f1_constructorstandings_json where year = to_number(to_char(trunc(sysdate),'RRRR'));
      else
        -- check if results for year already loaded. if then skip to load it.
        select count(year) into lv_count
-       from f1_constructorstandings_json
+       from f1_data.f1_constructorstandings_json
        where year = p_in_year;
      end if;
 
      if lv_count = 0 then
-       insert into f1_constructorstandings_json(
+       insert into f1_data.f1_constructorstandings_json(
           year
           ,constructorstandings
         ) values
@@ -455,7 +455,7 @@ as
 
     cursor cur_get_f1_seasons is
     select to_number(season) as season
-    from v_f1_season;
+    from f1_data.v_f1_season;
 
     -- inline
     procedure insert_results
@@ -469,11 +469,11 @@ as
 
     -- check if racedates already loaded , if then skip
      select count(year) into lv_count
-     from f1_seasons_race_dates
+     from f1_data.f1_seasons_race_dates
      where year = p_in_year;
 
      if lv_count = 0 then
-       insert into f1_seasons_race_dates(
+       insert into f1_data.f1_seasons_race_dates(
           year
           ,race_date
         ) values
@@ -517,7 +517,7 @@ as
 
     cursor cur_get_season_year is
     select to_number(season) as season
-    from v_f1_season
+    from f1_data.v_f1_season
     where to_number(season) > 1993;
 
     -- inline
@@ -535,13 +535,13 @@ as
 
       -- check if racedates already loaded , if then skip
       select count(year) into lv_count
-      from f1_qualification_json
+      from f1_data.f1_qualification_json
       where year = p_in_year
         and round = p_in_round;
 
      if lv_count = 0 then
 
-      insert into f1_qualification_json(
+      insert into f1_data.f1_qualification_json(
           year
           ,round
           ,qualification
@@ -566,17 +566,16 @@ as
 
    for rec in cur_get_season_year loop
 
-
       -- Special handling for current season since not all races are done yeat
- 
+
      select max(to_number(round)) into lv_number_of_races
-     from v_f1_races
+     from f1_data.v_f1_races
      where season = rec.season;
- 
+
      if lv_number_of_races > 0 then
 
         for i in 1..lv_number_of_races loop
-        
+
           -- Is the race finished ?
           if return_race_date(
                p_in_season => rec.season
@@ -586,15 +585,14 @@ as
             calling_url := replace(tmp_url,'{ROUND}',i);
             get_qualitimes(rec.season,i,calling_url);
           end if;
-          
+
         end loop; -- round in season
 
      end if; -- Has the season started yeat?
-     
-   end loop;
-   
-  end load_f1_qualitimes;
 
+   end loop;
+
+  end load_f1_qualitimes;
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -616,7 +614,7 @@ as
 
     cursor cur_get_season_year is
     select to_number(season) as season
-    from v_f1_season
+    from f1_data.v_f1_season
     where to_number(season) > 1995
       and to_number(season) <= to_number(trunc(to_char(sysdate,'RRRR')));
 
@@ -634,13 +632,13 @@ as
     begin
 
       select count(lap) into lv_count
-      from f1_laptimes_json
+      from f1_data.f1_laptimes_json
       where year = p_in_year
         and round = p_in_round
         and lap = p_in_lap;
 
       if lv_count = 0 then
-        insert into f1_laptimes_json(
+        insert into f1_data.f1_laptimes_json(
           year
           ,round
           ,lap
@@ -666,18 +664,18 @@ as
       -- Special handling for current season since not all races are done yeat
 
       select max(to_number(round)) into lv_number_of_races
-      from v_f1_races
+      from f1_data.v_f1_races
       where season = rec.season;
 
       if lv_number_of_races > 0 then
 
         for i in 1..lv_number_of_races loop
-        
+
           begin
-          
+
             select to_number(to_number(laps))
             into lv_number_of_laps
-            from v_f1_results
+            from f1_data.v_f1_results
             where to_number(position) = 1
               and to_number(season) = rec.season
               and to_number(race) = i;
@@ -697,12 +695,12 @@ as
             end if;  
           exception -- special handling if runned same date as race is and no data loaded on ergast.com yet!
              when no_data_found then
-                delete from f1_raceresults_json
+                delete from f1_data.f1_raceresults_json
                 where to_number(year) = rec.season
                   and to_number(round) = i;
                   commit;
           end;  
-          
+
         end loop;
       end if; -- lv_number_of_races 
     end loop; -- cursor
@@ -710,7 +708,7 @@ as
   end load_f1_laptimes;
 
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  
+
   procedure refresh_mviews
   is
   begin
@@ -724,20 +722,20 @@ as
   procedure reset_all_data 
   is
   begin
-    delete from f1_constructors_json;
-    delete from  f1_constructorstandings_json;
-    delete from  f1_drivers_json;
-    delete from  f1_driverstandings_json;
-    delete from f1_laptimes_json;
-    delete from f1_qualification_json;
-    delete from f1_race_json;
-    delete from f1_raceresults_json;
-    delete from f1_seasons_json;
-    delete from f1_seasons_race_dates;
-    delete from f1_tracks_json;
+    delete from f1_data.f1_constructors_json;
+    delete from f1_data.f1_constructorstandings_json;
+    delete from f1_data.f1_drivers_json;
+    delete from f1_data.f1_driverstandings_json;
+    delete from f1_data.f1_laptimes_json;
+    delete from f1_data.f1_qualification_json;
+    delete from f1_data.f1_race_json;
+    delete from f1_data.f1_raceresults_json;
+    delete from f1_data.f1_seasons_json;
+    delete from f1_data.f1_seasons_race_dates;
+    delete from f1_data.f1_tracks_json;
     commit;
   end reset_all_data;
-  
+
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   -- main published API starts here.
   --%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
