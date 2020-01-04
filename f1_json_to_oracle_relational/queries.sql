@@ -171,6 +171,7 @@ where dri.driverid = 'hunt'
 group by dri.givenname
          ,dri.familyname
          ,dri.nationality;
+         
 
 --- Show all ME9 Ericssons F1 races during his career --
 select *
@@ -178,7 +179,6 @@ from f1_access.v_mv_f1_results
 where pilotnr = 9
   and season >= 2014
 order by to_number(season),to_number(race) asc;
-
 
 -- List all times Alonso has driven at Monza
 select season,
@@ -565,7 +565,7 @@ select
     when q3 is null and q2 is null and q1 is not null then
       to_number(qu.q1_millis)
     else null
-  end as millis 
+  end as millis
 from
   f1_access.v_mv_f1_qualification_times qu
 where to_number(qu.position) = 1
@@ -664,12 +664,12 @@ group by f1r.circuitname,
 
 -- Get ditinct statuses
 select distinct(status)
-from f1_access.v_f1_results
+from f1_access.v_mv_f1_results
 order by status;
 
 -- How many times has there been accidents in Formula 1 in race situations?
 select count(*) as number_of_accidents
-from f1_access.v_f1_results
+from f1_access.v_mv_f1_results
 where lower(status) = 'accident';
 
 
@@ -678,7 +678,7 @@ select *
 from
 (
 select r.driverid,count(*) as number_of_accidents
-from f1_access.v_f1_results r
+from f1_access.v_mv_f1_results r
 where lower(r.status) = 'accident'
 group by r.driverid
 ) order by number_of_accidents desc;
