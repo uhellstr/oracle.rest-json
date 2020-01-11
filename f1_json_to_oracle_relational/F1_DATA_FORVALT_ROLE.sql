@@ -1,5 +1,6 @@
 create role F1_DATA_FORVALT_ROLE ;
 grant select on F1_DATA.F1_DATA_DRIVER_IMAGES to F1_DATA_FORVALT_ROLE   ;
+grant select on F1_DATA.F1_DATA_TRACK_IMAGES to F1_DATA_FORVALT_ROLE ;
 grant select on F1_DATA.F1_CONSTRUCTORS_JSON to F1_DATA_FORVALT_ROLE   ;
 grant select on F1_DATA.F1_CONSTRUCTORSTANDINGS_JSON to F1_DATA_FORVALT_ROLE   ;
 grant select on F1_DATA.F1_DRIVERS_JSON to F1_DATA_FORVALT_ROLE   ;
@@ -30,6 +31,7 @@ grant select on F1_DATA.MV_F1_RESULTS to F1_DATA_FORVALT_ROLE  ;
 
 -- Direct grants to be able to create view in F1_ACCESS
 grant select on F1_DATA.F1_DATA_DRIVER_IMAGES to F1_ACCESS   ;
+grant select on F1_DATA.F1_DATA_TRACK_IMAGES to F1_ACCESS   ;
 grant select on F1_DATA.V_F1_CONSTRUCTORS to F1_ACCESS  ;
 grant select on F1_DATA.V_F1_CONSTRUCTORSTANDINGS to F1_ACCESS    ;
 grant select on F1_DATA.V_F1_DRIVERS to F1_ACCESS   ;

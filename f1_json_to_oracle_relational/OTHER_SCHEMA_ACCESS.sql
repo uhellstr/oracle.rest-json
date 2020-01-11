@@ -14,6 +14,7 @@ grant F1_DATA_FORVALT_ROLE to &&f1_schema;
 grant create view to &&f1_schema;
 -- Direct grants to be able to create view in a other scema
 grant select on F1_DATA.F1_DATA_DRIVER_IMAGES to &&f1_schema   ;
+grant select on F1_DATA.F1_DATA_TRACK_IMAGES to &&f1_schema   ;
 grant select on F1_DATA.V_F1_CONSTRUCTORS to &&f1_schema  ;
 grant select on F1_DATA.V_F1_CONSTRUCTORSTANDINGS to &&f1_schema    ;
 grant select on F1_DATA.V_F1_DRIVERS to &&f1_schema   ;
@@ -34,6 +35,7 @@ grant select on F1_DATA.MV_F1_RESULTS to &&f1_schema   ;
 create or replace view &&f1_schema..V_MV_F1_QUALIFICATION_TIMES as select * from F1_DATA.MV_F1_QUALIFICATION_TIMES;
 create or replace view &&f1_schema..V_MV_F1_RESULTS as select * from F1_DATA.MV_F1_RESULTS;
 create or replace view &&f1_schema..V_F1_DATA_DRIVER_IMAGES as select * from F1_DATA.F1_DATA_DRIVER_IMAGES;
+create or replace view &&f1_schema..V_F1_DATA_TRACK_IMAGES as select * from F1_DATA.F1_DATA_TRACK_IMAGES;
 create or replace view &&f1_schema..V_F1_CONSTRUCTORS as select * from F1_DATA.V_F1_CONSTRUCTORS;
 create or replace view &&f1_schema..V_F1_CONSTRUCTORSTANDINGS as select * from F1_DATA.V_F1_CONSTRUCTORSTANDINGS;
 create or replace view &&f1_schema..V_F1_DRIVERS as select * from F1_DATA.V_F1_DRIVERS;
