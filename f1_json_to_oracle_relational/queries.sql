@@ -158,6 +158,18 @@ group by   c.constructorid,
            c.constructornationality 
 ) order by to_number(championship_wins) desc;
 
+-- Give us the total number of race wins per constructor.
+
+with race_wins as
+(select re.constructorname
+       ,count(re.constructorname) as  total_wins
+from v_mv_f1_results re
+where re.position = 1
+group by re.constructorname)
+select *
+from race_wins
+order by total_wins desc;
+
 -- Between what years did "Hunt the shunt" race in Formula 1 ?
 select dri.givenname
        ,dri.familyname
