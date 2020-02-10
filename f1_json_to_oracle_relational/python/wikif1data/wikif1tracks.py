@@ -83,7 +83,7 @@ def check_if_object_exists(connection):
 select count(*) as antal
 from dba_objects
 where owner  = 'F1_DATA'
-  and  object_name = 'V_F1_TRACKS'
+  and  object_name = 'V_F1_RESULTS'
   and object_type = 'VIEW'
 """
     c1 = connection.cursor()
@@ -105,20 +105,20 @@ def get_f1_tracks(connection):
 
     track_list = []
     sql_stmt =  """
-select
-    circuitid,
-    info
-from
-f1_data.v_f1_tracks
+select distinct season,circuitid,race,info
+from f1_data.v_f1_results
 where info is not null
+order by season,race
 """
     c1 = connection.cursor()
     c1.execute(sql_stmt)
     res = c1.fetchall()
     for row in res:
-        circuitid = row[0]
-        info = row[1]
-        val = str(circuitid)+","+str(info)
+        season = row[0]
+        circuitid = row[1]
+        race = row[2]
+        info = row[3]
+        val = str(season)+","+str(circuitid)+","+str(race)+","+str(info)
         track_list.append(val)
 
     return track_list
@@ -128,10 +128,10 @@ where info is not null
     Author: Ulf Hellstrom, oraminute@gmail.com
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 """
-def get_image_from_f1_wiki(circuitid,imageurl):
+def get_image_from_f1_wiki(circuitid,year,imageurl):
 
     if imageurl is not "null":
-        imagename = workingdir+"/images/"+circuitid+".jpg"
+        imagename = workingdir+"/images/"+circuitid+"_"+year+".jpg"
         resp = requests.get(imageurl, stream=True)
         local_file = open(imagename, 'wb')
         resp.raw.decode_content = True
@@ -148,18 +148,20 @@ def get_image_urls(track_list):
     image_list = []
     for val in track_list:
         imageurl="null"
-        circuitid = oramodule.split_list(val,',',0)
+        season = oramodule.split_list(val,',',0)
+        circuitid = oramodule.split_list(val,',',1)
         print("Fetching wiki data for: "+circuitid)
-        wikiurl  = oramodule.split_list(val,',',1)
+        wikiurl  = oramodule.split_list(val,',',3)
         print(wikiurl)
+        race = oramodule.split_list(val,',',2)
         r = requests.get(wikiurl)
         soup = BeautifulSoup(r.content,'html.parser')
         covers = soup.select('table.infobox a.image img[src]')
         for cover in covers:
             imageurl = "https:"+ cover['src']
-        val = str(circuitid)+"|"+str(wikiurl)+"|"+str(imageurl)    
+        val = str(season)+"|"+str(circuitid)+"|"+str(race)+"|"+str(wikiurl)+"|"+str(imageurl)    
         image_list.append(val)
-        get_image_from_f1_wiki(circuitid,imageurl)
+        get_image_from_f1_wiki(circuitid,season,imageurl)
 
     return image_list  
 
@@ -171,22 +173,31 @@ def get_image_urls(track_list):
 def insert_image_data(connection,imageinfo):
 
     imagename = workingdir+"/images/"
-    circuitid = oramodule.split_list(imageinfo,'|',0)
-    checkimage = oramodule.split_list(imageinfo,'|',2)
-    imagename = workingdir+"/images/"+circuitid+".jpg"
-    #print("checkimage is: "+checkimage)
-    if checkimage.startswith("https:"):
-        print("Insert into F1_DATA: "+circuitid+","+imagename)
-        with open(imagename, 'rb') as f:
-            imgdata = f.read()
-    
-        cursor = connection.cursor()
-        cursor.execute("""
-         insert into f1_data.F1_DATA_TRACK_IMAGES (circuitid,image)
-         values (:circuitid, :blobdata)""",
-            circuitid=circuitid, blobdata=imgdata)
-        connection.commit()    
-        cursor.close()
+    season = oramodule.split_list(imageinfo,'|',0)
+    circuitid = oramodule.split_list(imageinfo,'|',1)
+    race = oramodule.split_list(imageinfo,'|',2)
+    checkimage = oramodule.split_list(imageinfo,'|',3)
+    print("checkimage is: "+checkimage)
+    if checkimage is not "null":
+        imagename = workingdir+"/images/"+circuitid+"_"+season+".jpg"
+        print(imagename)
+        if checkimage.startswith("http"):
+            print("Insert into F1_DATA: "+circuitid+","+imagename)
+            try:
+                with open(imagename, 'rb') as f:
+                    imgdata = f.read()
+            except Exception:
+                imgdata = None
+                pass
+            cursor = connection.cursor()
+            cursor.execute("""
+            insert into f1_data.F1_DATA_TRACK_IMAGES (circuitid,year,race,image)
+            values (:circuitid,:year,:race,:blobdata)""",
+            circuitid=circuitid,year=season,race=race,blobdata=imgdata)
+            connection.commit()    
+            cursor.close()
+    else:
+        print("Missing image data for: "+season+","+race+","+circuitid)        
 
 """
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
