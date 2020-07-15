@@ -237,14 +237,13 @@ How to install the basetables and start load the data from ergast ?
 1. First you need to run the "setup_schema.sql" script as SYS.
 
 Now before running it look at the ACL part and change the password for the F1_DATA schema if not in a private demo environment. 
-You must have APEX installed before attempting to run the script and depending on the version of APEX you have you need to change the script to match your APEX installation schema.
+You must have APEX installed before attempting to run the script. The script will automaticly find out the latest installed version
+of APEX and add it to the ACL list.
 
-The script defaults to 19.1 of APEX and in that version the schemaname is APEX_190100. You must change that to match
-the version of APEX installed in your database in all places where it is used in the script.
 
 You also have to look at the DBMS_NETWORK_ACL_ADMIN.ASSIGN_ACL where you set the hostname for the server where the Oracle database is installed.
 
-In the example it is set to 'localhost'. You need to change that to match your environment.
+In the example it is set to 'localhost'. You need to change that to match your environment if necessary.
 
 The ACL part (Access Control List) is where we tell the Oracle database that we allow for doing http calls from inside the database
 and to a website outside our protected environment. It is quite complex configuration so I refer to the official Oracle documentation for you to read more about ACL's in Oracle.
@@ -267,12 +266,14 @@ a) SQL> conn F1_DATA/oracle
 b) SQL> @setup_objs.sql
 
 Check for any errors. I recommend to use SQL*Developer to check for any invalid objects and re-compile them and also look at the
-scheduler job to make sure it runs as intended. The job will be started once every hour if everyting works so it might take some
+scheduler job to make sure it runs as intended. The job is defaulted to start 20:00 everyday. if everyting works so it might take some
 time before you see any data starting to be loaded into the base tables.
 
 How to use the data for analysis ?
 ---------------------------------
 
 I have provided a SQL script called "queries.sql" you can use for start analysing the data. I also provided a number of materialized views that speeds up some queries due to minimize parsing time when joining different tables with each others.
+
+There is also som additional script for handling ORDS AutoRest (E.g publish back the relational data as REST services). Scripts for allowing other users then F1_ACCESS to access data thru views and som python scripts for loading images of drivers,tracks etc. See the included README_FIRST.txt for more information.
 
 I'm currently building a APEX application ontop of the data but it's not yet ready but the query part might be interesting nevertheless.
