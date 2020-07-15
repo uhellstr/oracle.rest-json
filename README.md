@@ -206,7 +206,11 @@ Requirements:
 
 * Linux environment supported like Centos7. The demo is not tested or has any scripts for Windows.
 * Oracle 12c or higher. (For a non licensed environment I strongly recommend to use Oracle 18c Express Edition or higher) 
-* Oracle Application Express version 5 or higher. 
+* Oracle Application Express version 5 or higher. Recommend version 18.x and higher and prefered use the lastest possible version.
+  Even if you do not use APEX the PL/SQL API used to fetch data from ergast uses packaged API only found in APEX so APEX *MUST* be installed.
+* ORDS is used if you want to test AutoRest functionality and then i recommend 20.2 version or higher.
+
+Note: ergast is used only for non commercial applications. You cannot use this data and build any kind of commercial applications as per there license.
 
 I'm a huge fan of Formula 1. I've been following it since i was a kid and the "Superswede" Ronnie Peterson was my absolute
 hero. I still belive the "Lotus 72D" is one of the most beatiful oneseater cars ever built. As a "datanerd". i'm more into analysing data then the database technology itself. So having a lot of F1 data for historical Formula 1 races, season, laptimes etc would be great to help me better understand how the teams differs from each others, how drivers perform during a season, what enginges seems to have
