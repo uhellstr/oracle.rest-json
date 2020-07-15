@@ -189,12 +189,24 @@ def insert_image_data(connection,imageinfo):
             except Exception:
                 imgdata = None
                 pass
+            try:
+                with open(imagename, "rb") as img_file:
+                    base64img = base64.b64encode(img_file.read())
+            except Exception:
+                base64img = None
+                pass
+
             cursor = connection.cursor()
-            cursor.execute("""
-            insert into f1_data.F1_DATA_TRACK_IMAGES (circuitid,year,race,image)
-            values (:circuitid,:year,:race,:blobdata)""",
-            circuitid=circuitid,year=season,race=race,blobdata=imgdata)
-            connection.commit()    
+            try:
+                cursor.execute("""
+                insert into f1_data.F1_DATA_TRACK_IMAGES (circuitid,year,race,image,image_base64,image_type)
+                values (:circuitid,:year,:race,:blobdata,:base64data,:type)""",
+                circuitid=circuitid,year=season,race=race,blobdata=imgdata,base64data=base64img,type='jpg')
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                pass  
+
             cursor.close()
     else:
         print("Missing image data for: "+season+","+race+","+circuitid)        

@@ -179,12 +179,13 @@ def insert_image_data(connection,imageinfo):
         print("Insert into F1_DATA: "+driverid+","+imagename)
         with open(imagename, 'rb') as f:
             imgdata = f.read()
-    
+        with open(imagename, "rb") as img_file:
+            base64img = base64.b64encode(img_file.read())    
         cursor = connection.cursor()
         cursor.execute("""
-         insert into f1_data.F1_DATA_DRIVER_IMAGES (driverid,image)
-         values (:driverid, :blobdata)""",
-            driverid=driverid, blobdata=imgdata)
+         insert into f1_data.F1_DATA_DRIVER_IMAGES (driverid,image,image_base64,image_type)
+         values (:driverid, :blobdata,:base64data,:type)""",
+            driverid=driverid, blobdata=imgdata,base64data=base64img,type='jpg')
         connection.commit()    
         cursor.close()
 
