@@ -29,3 +29,5 @@ If you want to enable AutoRest for F1_ACCESS schema then run and have a look at
 F1_ACCESS_AUTOREST_ENABLE.sql
 To disable AUTOREST for views in F1_ACCESS schema use the script
 F1_ACCESS_AUTOREST_DISABLE.sql
+
+In ./python/AutoRest there is an Python3 based example on how to make a call to ORDS Autorest published view
