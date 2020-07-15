@@ -10,6 +10,7 @@ REM Below we have all views AutoRest enabled and some examples on how to query
 REM
 
 prompt V_F1_CONSTRUCTORS
+
 REM Get metadata for constructors
 REM http://localhost:8080/ords/pdbutv1/f1_access/metadata-catalog/constructors/
 REM Query constructors and fetch all rows (limit)
@@ -30,12 +31,13 @@ END;
 /
 
 prompt V_F1_CONSTRUCTORSTANDINGS
+
 REM Metadata query
 REM http://localhost:8080/ords/pdbutv1/f1_access/metadata-catalog/constructorstandings/
 REM Get data from constructorstandings 
 REM http://localhost:8080/ords/pdbutv1/f1_access/constructorstandings/?limit=500
 REM Query the standings after race 21 in season 2019
-REM localhost:8080/ords/pdbutv1/f1_access/constructorstandings/?q={"season":"2019","race":"21","$orderby":{"position":"asc"}}
+REM http://localhost:8080/ords/pdbutv1/f1_access/constructorstandings/?q={"season":"2019","race":"21","$orderby":{"position":"asc"}}
 
 BEGIN
   ORDS.enable_object (
@@ -51,12 +53,13 @@ END;
 /
 
 prompt V_F1_DRIVERS
+
 REM Metadata query
 REM http://localhost:8080/ords/pdbutv1/f1_access/metadata-catalog/drivers/
 REM Get data for F1 drivers thru the history
 REM http://localhost:8080/ords/pdbutv1/f1_access/drivers/?limit=500
 REM Query all swedish drivers
-REM localhost:8080/ords/pdbutv1/f1_access/drivers/?q={"nationality":"Swedish"}
+REM http://localhost:8080/ords/pdbutv1/f1_access/drivers/?q={"nationality":"Swedish"}
 
 BEGIN
   ORDS.enable_object (
@@ -72,6 +75,7 @@ END;
 /
 
 prompt V_F1_DRIVERSTANDINGS
+
 BEGIN
   ORDS.enable_object (
     p_enabled      => TRUE, -- Default  { TRUE | FALSE }
@@ -86,6 +90,7 @@ END;
 /
 
 prompt V_F1_LAST_RACE_RESULTS
+
 BEGIN
   ORDS.enable_object (
     p_enabled      => TRUE, -- Default  { TRUE | FALSE }
@@ -100,6 +105,7 @@ END;
 /
 
 prompt V_F1_RACES
+
 BEGIN
   ORDS.enable_object (
     p_enabled      => TRUE, -- Default  { TRUE | FALSE }
@@ -114,6 +120,7 @@ END;
 /
 
 prompt V_F1_SEASON
+
 BEGIN
   ORDS.enable_object (
     p_enabled      => TRUE, -- Default  { TRUE | FALSE }
@@ -128,6 +135,7 @@ END;
 /
 
 prompt V_F1_SEASONS_RACE_DATES
+
 BEGIN
   ORDS.enable_object (
     p_enabled      => TRUE, -- Default  { TRUE | FALSE }
@@ -142,6 +150,7 @@ END;
 /
 
 prompt V_F1_TRACKS
+
 BEGIN
   ORDS.enable_object (
     p_enabled      => TRUE, -- Default  { TRUE | FALSE }
@@ -156,6 +165,7 @@ END;
 /
 
 prompt V_F1_UPCOMING_RACES
+
 BEGIN
   ORDS.enable_object (
     p_enabled      => TRUE, -- Default  { TRUE | FALSE }
@@ -170,6 +180,7 @@ END;
 /
 
 prompt V_MV_F1_LAP_TIMES
+
 BEGIN
   ORDS.enable_object (
     p_enabled      => TRUE, -- Default  { TRUE | FALSE }
@@ -184,6 +195,7 @@ END;
 /
 
 prompt V_MV_F1_QUALIFICATION_TIMES
+
 BEGIN
   ORDS.enable_object (
     p_enabled      => TRUE, -- Default  { TRUE | FALSE }
@@ -198,6 +210,7 @@ END;
 /
 
 prompt V_MV_F1_RESULTS
+
 BEGIN
   ORDS.enable_object (
     p_enabled      => TRUE, -- Default  { TRUE | FALSE }
@@ -205,6 +218,36 @@ BEGIN
     p_object       => 'V_MV_F1_RESULTS',
     p_object_type  => 'VIEW', -- Default  { TABLE | VIEW }
     p_object_alias => 'results'
+  );
+    
+  COMMIT;
+END;
+/
+
+prompt V_F1_DATA_DRIVER_IMAGES
+
+BEGIN
+  ORDS.enable_object (
+    p_enabled      => TRUE, -- Default  { TRUE | FALSE }
+    p_schema       => 'F1_ACCESS',
+    p_object       => 'V_F1_DATA_DRIVER_IMAGES',
+    p_object_type  => 'VIEW', -- Default  { TABLE | VIEW }
+    p_object_alias => 'driverimages'
+  );
+    
+  COMMIT;
+END;
+/
+
+prompt V_F1_DATA_TRACK_IMAGES
+
+BEGIN
+  ORDS.enable_object (
+    p_enabled      => TRUE, -- Default  { TRUE | FALSE }
+    p_schema       => 'F1_ACCESS',
+    p_object       => 'V_F1_DATA_TRACK_IMAGES',
+    p_object_type  => 'VIEW', -- Default  { TABLE | VIEW }
+    p_object_alias => 'trackimages'
   );
     
   COMMIT;
