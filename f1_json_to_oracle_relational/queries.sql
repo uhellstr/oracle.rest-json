@@ -3,6 +3,55 @@
 --                   Run these queries as F1_ACCESS
 -- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+-- Give us the race winner and drivers with score for the last race
+
+select
+  vfr.season,
+  vfr.race,
+  --vfr.info,
+  vfr.racename,
+  vfr.circuitid,
+  --vfr.url,
+  vfr.circuitname,
+  --lat,
+  --lon,
+  vfr.locality,
+  vfr.country,
+  vfr.racedate,
+  vfr.pilotnr,
+  vfr.position,
+  vfr.positiontext,
+  vfr.points,
+  vfr.driverid,
+  --vfr.drivurl,
+  vfr.givenname,
+  vfr.familyname,
+  vfr.dateofbirth,
+  vfr.nationality,
+  vfr.constructorid,
+  --vfr.constructorinfo,
+  vfr.constructorname,
+  vfr.constructornationality,
+  vfr.grid,
+  vfr.laps,
+  vfr.status,
+  vfr.ranking,
+  vfr.fastestlap,
+  vfr.units,
+  vfr.speed,
+  vfr.millis,
+  vfr.racetime
+from
+  f1_access.v_mv_f1_results vfr
+where to_number(vfr.season) = to_number(to_char(trunc(sysdate),'RRRR'))
+  and position is not null
+  and to_number(vfr.race) = (select min(to_number(round))-1
+                          from f1_access.v_f1_upcoming_races
+                          where to_number(season) = to_number(to_char(trunc(sysdate),'RRRR'))
+                            and to_date(race_date,'RRRR-MM-DD') >= trunc(sysdate))
+order by to_number(vfr.position) asc
+fetch first 10 rows only;
+
 -- Give us all world champions in Formula 1!!
 select
     d.season,

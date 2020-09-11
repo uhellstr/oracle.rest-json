@@ -1,6 +1,15 @@
 set serveroutput on
 declare
-  c_sel_stmt     constant varchar2(400) := 'select version, schema, status from sys.dba_registry where comp_id = ''APEX''';
+  --c_sel_stmt     constant varchar2(400) := 'select version, schema, status from sys.dba_registry where comp_id = ''APEX''';
+  -- There is some kind of bug not updating dba_registry when installing APEX 20 into 19c Application Container
+  -- Thats why changed sql to the one below!!
+  c_sel_stmt     constant varchar2(1000) := q'#select (select version_no as version from apex_release) as version
+                                                     ,username as schema
+                                                     ,'VALID' as status
+                                              from dba_users
+                                              where regexp_like(username,'APEX_[[:digit:]]')
+                                              order by to_number(substr(username,-6)) desc
+                                              fetch first row only#';
   c_grant_select constant varchar2(100) := 'grant select on ';
   c_to_user      constant varchar2(400) := ' to ' || dbms_assert.enquote_name('^ADMINUSER') || ' with grant option';
   l_apex_schema  varchar2(255) := null;
