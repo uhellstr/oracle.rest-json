@@ -45,12 +45,24 @@ from
   f1_access.v_mv_f1_results vfr
 where to_number(vfr.season) = to_number(to_char(trunc(sysdate),'RRRR'))
   and position is not null
-  and to_number(vfr.race) = (select min(to_number(round))-1
-                          from f1_access.v_f1_upcoming_races
-                          where to_number(season) = to_number(to_char(trunc(sysdate),'RRRR'))
-                            and to_date(race_date,'RRRR-MM-DD') >= trunc(sysdate))
+  and to_number(vfr.race) = (with last_race as -- we need to check if any upcoming races or if the last race for the season is done.
+                              (
+                                select nvl(min(to_number(round))-1,-1) as race -- check if any upcoming races this seaseon -1 and season is done
+                                from f1_access.v_f1_upcoming_races
+                                where to_number(season) = to_number(to_char(trunc(sysdate),'RRRR'))
+                                  and to_date(race_date,'RRRR-MM-DD') >= trunc(sysdate)
+                              )
+                              select case when race = -1 
+                                then (select max(to_number(round))
+                                      from  f1_access.v_f1_races
+                                      where to_number(season) = to_number(to_char(trunc(sysdate),'RRRR')))
+                                      else race
+                                      end race
+                                      from last_race
+                            )
 order by to_number(vfr.position) asc
 fetch first 10 rows only;
+
 
 -- Give us all world champions in Formula 1!!
 select
@@ -370,7 +382,7 @@ from f1_access.v_mv_f1_results r
 where r.driverid = 'ericsson'
 group by r.driverid;
 
--- Get median posititon for all drivers in the modern era 2010-2019
+-- Get median posititon for all drivers in the modern era 2010-2020
 select driverid,
        givenname,
        familyname,
@@ -385,7 +397,7 @@ select r.driverid,
        (select count(b.driverid) from f1_access.v_mv_f1_results b
         where b.driverid = r.driverid) as number_of_races
 from f1_access.v_mv_f1_results r
-where to_number(r.season) between 2010 and 2019              
+where to_number(r.season) between 2010 and 2020              
 group by r.driverid,r.givenname,r.familyname
 ) where number_of_races > 10
 order by median_position asc,number_of_races desc;
@@ -408,7 +420,7 @@ group by r.givenname
          ,r.familyname
 ) order by total_races desc;
 
--- Get races for current year not yet done.  
+-- Get races for current year not yet done or not having updated results on ergast
 select a.season,
        a.round,
        a.race_date
