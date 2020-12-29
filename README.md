@@ -10,8 +10,8 @@ Requirements:
 
 * Linux environment supported like Centos7. The demo is not tested or has any scripts for Windows.
 * Oracle 11g or higher. (For a non licensed environment I strongly recommend to use Oracle 18c Express Edition or higher)
-* Java 8 or higher where you install Oracle Rest Data Services. 
-* Oracle Application Express version 5 or higher
+* Java 8 or Java 11 LTS or higher where you install Oracle Rest Data Services. 
+* Oracle Application Express version 20 or higher
 * Latest version of Oracle Rest Data services (ORDS)
 
 All the installation kits can be downloaded from https://www.oracle.com/technical-resources/
@@ -189,6 +189,7 @@ Use npm to install
 * require
 * blessed
 * blessed-contrib
+* terminal
 
 That should be as easy as "npm install require" etc.
 
