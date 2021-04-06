@@ -227,7 +227,8 @@ with race_wins as
 from v_mv_f1_results re
 where re.position = 1
 group by re.constructorname)
-select *
+select constructorname
+      ,total_wins
 from race_wins
 order by total_wins desc;
 
@@ -249,7 +250,7 @@ group by dri.givenname
 --- Show all ME9 Ericssons F1 races during his career --
 select *
 from f1_access.v_mv_f1_results
-where pilotnr = 9
+where driverid = 'ericsson'
   and season >= 2014
 order by to_number(season),to_number(race) asc;
 
