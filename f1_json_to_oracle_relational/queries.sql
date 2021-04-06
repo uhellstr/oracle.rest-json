@@ -50,18 +50,18 @@ where to_number(vfr.season) = to_number(to_char(trunc(sysdate),'RRRR'))
                                 select nvl(min(to_number(round))-1,-1) as race -- check if any upcoming races this seaseon -1 and season is done
                                 from f1_access.v_f1_upcoming_races
                                 where to_number(season) = to_number(to_char(trunc(sysdate),'RRRR'))
-                                  and to_date(race_date,'RRRR-MM-DD') >= trunc(sysdate)
+                                  and to_date(race_date,'RRRR-MM-DD') <= trunc(sysdate)
                               )
-                              select case when race = -1 
-                                then (select max(to_number(round))
-                                      from  f1_access.v_f1_races
-                                      where to_number(season) = to_number(to_char(trunc(sysdate),'RRRR')))
+                              select case when race = -1 then (select max(to_number(round))
+                                                               from  f1_access.v_f1_races
+                                                               where to_number(season) = to_number(to_char(trunc(sysdate),'RRRR')))
                                       else race
                                       end race
                                       from last_race
                             )
 order by to_number(vfr.position) asc
 fetch first 10 rows only;
+
 
 
 -- Give us all world champions in Formula 1!!
@@ -676,7 +676,7 @@ where lp.season = 2019
                             where lp1.season = 2019
                               and lp1.round = 9);
 
--- Show us Hamilton's race wins and Silverstone uk.
+-- Show us Hamilton's race wins at Silverstone uk.
 select
   f1r.season,
   f1r.race,
