@@ -696,9 +696,9 @@ select
 from
   f1_access.v_mv_f1_results f1r
   where f1r.circuitid = 'silverstone'
-    and to_number(position) = 1
+    and position = 1
     and driverid = 'hamilton'
-order  by season desc;
+order by season desc;
 
 -- Give us the winners at Silverstonde thru history and the total number of wins.
 select circuitname,
@@ -725,7 +725,7 @@ select
 from
   f1_access.v_mv_f1_results f1r
 where f1r.circuitid = 'silverstone'
-  and to_number(f1r.position) = 1
+  and f1r.position = 1
 group by f1r.circuitname,
          f1r.locality,
          f1r.country,
@@ -768,3 +768,63 @@ from f1_access.v_mv_f1_results r
 where lower(r.status) = 'accident'
   and lower(r.driverid) = 'ericsson';
 
+-- Give us the first race a driver attended.
+
+select vfr.season,
+       vfr.race,
+       vfr.position,       
+       vfd.driverid,
+       vfd.givenname,
+       vfd.familyname,
+       vfd.dateofbirth,
+       vfd.nationality,
+       vfr.racename,
+       vfr.circuitid,
+       vfr.circuitname,
+       vfr.locality,
+       vfr.country,
+       vfr.racedate,
+       vfr.pilotnr,
+       vfr.constructorid,
+       vfr.constructorname,
+       vfr.constructornationality  
+from f1_access.v_f1_drivers vfd
+inner join f1_access.v_mv_f1_results vfr
+on vfd.driverid = vfr.driverid
+where vfr.season = (select min(a.season) from v_mv_f1_results a
+                    where a.driverid = vfd.driverid)
+  and vfr.race   = (select min(b.race) from v_mv_f1_results b
+                    where b.driverid = vfd.driverid
+                      and b.season = vfr.season)
+order by vfr.season,vfr.race asc;
+
+-- Find all drivers that was on the podium the first race they ever attended
+
+select vfr.season,
+       vfr.race,
+       vfr.position,       
+       vfd.driverid,
+       vfd.givenname,
+       vfd.familyname,
+       vfd.dateofbirth,
+       vfd.nationality,
+       vfr.racename,
+       vfr.circuitid,
+       vfr.circuitname,
+       vfr.locality,
+       vfr.country,
+       vfr.racedate,
+       vfr.pilotnr,
+       vfr.constructorid,
+       vfr.constructorname,
+       vfr.constructornationality  
+from f1_access.v_f1_drivers vfd
+inner join f1_access.v_mv_f1_results vfr
+on vfd.driverid = vfr.driverid
+where vfr.season = (select min(a.season) from v_mv_f1_results a
+                    where a.driverid = vfd.driverid)
+  and vfr.race   = (select min(b.race) from v_mv_f1_results b
+                    where b.driverid = vfd.driverid
+                      and b.season = vfr.season)
+  and vfr.position < 4                    
+order by vfr.season,vfr.race asc;
