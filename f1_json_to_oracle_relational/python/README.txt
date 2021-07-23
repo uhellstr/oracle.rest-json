@@ -14,7 +14,7 @@ and some python scripts and a Jupyter Notebook to demonstrate how to fetch
 data from a Oracle Database over ORDS to python.
 
 The utility will scrape wikipedia pages for images (where there exists one) for
-the F1 drivers wikipedia pages as downloaded from ergast.com
+the F1 drivers and track images from wikipedia pages as downloaded from ergast.com
 
 To use this utiltiy you first need to have installed the f1_data schema and
 downloaded the data using the provided pl/sql package F1_INIT_PKG.LOAD_JSON
