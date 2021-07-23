@@ -10,6 +10,8 @@
 |___|_|  |_/_/   \_\____|_____|____/ 
 
 This catalog includes a extra tool written in python 3
+and some python scripts and a Jupyter Notebook to demonstrate how to fetch
+data from a Oracle Database over ORDS to python.
 
 The utility will scrape wikipedia pages for images (where there exists one) for
 the F1 drivers wikipedia pages as downloaded from ergast.com
