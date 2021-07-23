@@ -3,6 +3,10 @@
 --                   Run these queries as F1_ACCESS
 -- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+-- If you need more data for dbms_xplan
+
+alter session set statistics_level=ALL;
+
 -- Give us the race winner and drivers with score for the last race
 
 select
@@ -769,6 +773,11 @@ where lower(r.status) = 'accident'
   and lower(r.driverid) = 'ericsson';
 
 -- Give us the first race a driver attended.
+
+/*******************************************************************************
+Before running this queries  create the following index (not created by default)
+CREATE INDEX IND_F1_RESULTAT_DRIVERID ON F1_DATA.MV_F1_RESULTS (DRIVERID);
+*******************************************************************************/
 
 select vfr.season,
        vfr.race,
