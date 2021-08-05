@@ -270,7 +270,7 @@ as
         -- check that we have a race that has finished before trying to load results
         if  return_race_date(
                p_in_season => rec.season
-               ,p_in_round => to_number(rec.round)) <= trunc(sysdate-5) 
+               ,p_in_round => to_number(rec.round)) <= trunc(sysdate-2) 
         then
           tmp := replace(url,'{YEAR}',rec.season);
           calling_url := replace(tmp,'{ROUND}',rec.round);
@@ -570,7 +570,7 @@ as
           -- Is the race finished ?
           if return_race_date(
                p_in_season => rec.season
-               ,p_in_round => i) <= trunc(sysdate-5) 
+               ,p_in_round => i) <= trunc(sysdate-2) -- Let there be some time for ergast to update 
           then
             tmp_url := replace(url,'{YEAR}',rec.season);
             calling_url := replace(tmp_url,'{ROUND}',i);
@@ -675,7 +675,7 @@ as
             if return_race_date
                    (
                      p_in_season => rec.season
-                    ,p_in_round => i) <= trunc(sysdate-5) 
+                    ,p_in_round => i) <= trunc(sysdate-2) -- Let there be some time for Ergast to update
             then 
               for j in 1..lv_number_of_laps loop
                   tmp_url := replace(url,'{YEAR}',rec.season);
