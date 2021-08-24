@@ -276,4 +276,4 @@ You will get some errors due to way the scripts where generated som indexes are 
 
 I have provided a SQL script called "queries.sql" you can use for start analysing the data. I also provided a number of materialized views that speeds up some queries due to minimize parsing time when joining different tables with each others.
 
-There is also som additional script for handling ORDS AutoRest (E.g publish back the relational data as REST services). Scripts for allowing other users then F1_ACCESS to access data thru views and som python scripts for loading images of drivers,tracks etc and Jupyter Notebook examples on how to plot graphps for the Formula 1 2021 season. See the included README_FIRST.txt for more information.
+There is also som additional script for handling ORDS AutoRest (E.g publish back the relational data as REST services). Scripts for allowing other users then F1_ACCESS to access data thru views and som python scripts for loading images of drivers,tracks etc and Jupyter Notebook examples on how to plot graphs using pandas and mathplotlib for the Formula 1 2021 season. See the included README_FIRST.txt for more information.
