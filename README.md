@@ -258,17 +258,15 @@ select apex_web_service.make_rest_request(
     p_http_method => 'GET' 
 ) as result from dual;
 
-2. When, and only when the query above works it is time to setup the schema and initiate the job to start download data from ergast.com
-This is done by running the "setup_objs.sql" scipt to initiate all tables and views and the scheduler job.
-The script should only be run as the "F1_DATA" schema user.
+2. When, and only when the query above works it is time to setup the schema and initiate tables, views and setup scheduled jobs
+for downloading data from ergast
 
-a) SQL> conn F1_DATA/oracle
+As the SYS user runt the following scripts
 
+a) SQL> @setup_schema.sql
 b) SQL> @setup_objs.sql
 
-Check for any errors. I recommend to use SQL*Developer to check for any invalid objects and re-compile them and also look at the
-scheduler job to make sure it runs as intended. The job is defaulted to start 20:00 everyday. if everyting works so it might take some
-time before you see any data starting to be loaded into the base tables.
+You will get some errors due to way the scripts where generated som indexes are duplicated. YOu can however just ignore them.
 
 ## How to use the data for analysis ?
 
