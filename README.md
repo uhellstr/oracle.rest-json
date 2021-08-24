@@ -263,9 +263,12 @@ for downloading data from ergast
 
 As the SYS user runt the following scripts
 
-a) SQL> @setup_schema.sql
-b) SQL> @setup_objs.sql
-
+ ```
+SQL> conn sys@<TNS-ALIAS> as sysdba 
+SQL> @setup_schemas.sql
+SQL> @setup_objs.sql
+```
+ 
 You will get some errors due to way the scripts where generated som indexes are duplicated. YOu can however just ignore them.
 
 ## How to use the data for analysis ?
