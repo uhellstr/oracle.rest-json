@@ -110,6 +110,7 @@ You ofcause needs to edit the paths below if you have another user then test set
 
 startords:
 
+```
 #!/bin/bash
 export PATH=/usr/sbin:/usr/local/bin:/usr/bin:/usr/local/sbin:$PATH
 LOGFILE=/home/test/ords/logs/ords-`date +"%Y""%m""%d"`.log
@@ -117,12 +118,15 @@ cd /home/test/ords/ords191
 export JAVA_OPTIONS="-Dorg.eclipse.jetty.server.Request.maxFormContentSize=3000000"
 nohup java ${JAVA_OPTIONS} -jar ords.war standalone >> $LOGFILE 2>&1 &
 echo "View log file with : tail -f $LOGFILE"
+```
 
 stopords:
 
+```
 #!/bin/bash
 export PATH=/usr/sbin:/usr/local/bin:/usr/bin:/usr/local/sbin:$PATH
 kill `ps -ef | grep ords.war | awk '{print $2}'` >/dev/null 2>&1stopords:
+```
 
 d) Now you can try out to see if APEX and ORDS works as intended by using a browser and a URL like:
 
