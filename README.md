@@ -162,9 +162,8 @@ done by calling the following url:
 
 http://localhost:8080/ords/xepdb1/rest_data/testmodule/country/Sweden
 
-##How does this work e.g how do we get our relational data out as JSON ?
-##----------------------------------------------------------------------
-
+## How does this work e.g how do we get our relational data out as JSON ?
+ 
 First of all look at the sql script REST_SETUP.sql
 This script instructs Oracle to enable REST for the Oracle schema rest_data and is a way of granting permission
 to allow data to be called from the ORDS service.
@@ -181,8 +180,7 @@ This is where we tell ORDS how to map the PL/SQL packaged code back to URL where
 even allow for calling the PL/SQL package with paramters like what country we want statistics for
 as in the above example where we look at the population for Sweden.
 
-#Using the node example code written in nodejs:
-#----------------------------------------------
+## Using the node example code written in nodejs.
 
 If you don't want to write your own client you could test out the provided example code written for nodejs
 Installing nodejs is reallys simple. For more information on how to get started see https://nodejs.org/en/
