@@ -25,7 +25,7 @@ https://oracle-base.com
 
 You can use a browser like Chromium, Safari, Firefox to call the published services but the demo also includes som examples made with the nodejs engine to show that you can call Oracle Rest enabled services from any language supporting JSON and REST calls. You could easy create a client in any language like python, ruby or even in C. See your platform for how to install node. (It's easy) if you intend to try out the node part of the code
 
-Configuring ORDS:
+## Configuring ORDS (Oracle Rest Data Services):
 
 a) Install Oracle Application Express (APEX) if not installed in the datbase you intend to run this demo against.
 
@@ -162,8 +162,8 @@ done by calling the following url:
 
 http://localhost:8080/ords/xepdb1/rest_data/testmodule/country/Sweden
 
-How does this work e.g how do we get our relational data out as JSON ?
-----------------------------------------------------------------------
+##How does this work e.g how do we get our relational data out as JSON ?
+##----------------------------------------------------------------------
 
 First of all look at the sql script REST_SETUP.sql
 This script instructs Oracle to enable REST for the Oracle schema rest_data and is a way of granting permission
@@ -181,8 +181,8 @@ This is where we tell ORDS how to map the PL/SQL packaged code back to URL where
 even allow for calling the PL/SQL package with paramters like what country we want statistics for
 as in the above example where we look at the population for Sweden.
 
-Using the node example code written in node:
-----------------------------
+#Using the node example code written in nodejs:
+#----------------------------------------------
 
 If you don't want to write your own client you could test out the provided example code written for nodejs
 Installing nodejs is reallys simple. For more information on how to get started see https://nodejs.org/en/
@@ -204,8 +204,8 @@ $ node sweden_graph.js
 There is one configuration file you need to be aware of. You can change the "resturl" value for all
 of the node apps in "config.json" so it matches your environment. 
 
-How to consume a REST service and transform JSON to Relational data for SQL analysis ?
---------------------------------------------------------------------------------------
+#How to consume a REST service and transform JSON to Relational data for SQL analysis ?
+#--------------------------------------------------------------------------------------
 
 Requirements:
 
@@ -279,6 +279,4 @@ How to use the data for analysis ?
 
 I have provided a SQL script called "queries.sql" you can use for start analysing the data. I also provided a number of materialized views that speeds up some queries due to minimize parsing time when joining different tables with each others.
 
-There is also som additional script for handling ORDS AutoRest (E.g publish back the relational data as REST services). Scripts for allowing other users then F1_ACCESS to access data thru views and som python scripts for loading images of drivers,tracks etc. See the included README_FIRST.txt for more information.
-
-I'm currently building a APEX application ontop of the data but it's not yet ready but the query part might be interesting nevertheless.
+There is also som additional script for handling ORDS AutoRest (E.g publish back the relational data as REST services). Scripts for allowing other users then F1_ACCESS to access data thru views and som python scripts for loading images of drivers,tracks etc and Jupyter Notebook examples on how to plot graphps for the Formula 1 2021 season. See the included README_FIRST.txt for more information.
