@@ -202,10 +202,9 @@ $ node sweden_graph.js
 There is one configuration file you need to be aware of. You can change the "resturl" value for all
 of the node apps in "config.json" so it matches your environment. 
 
-#How to consume a REST service and transform JSON to Relational data for SQL analysis ?
-#--------------------------------------------------------------------------------------
+# How to consume a REST service and transform JSON to Relational data for SQL analysis ?
 
-Requirements:
+## Requirements:
 
 * Linux environment supported like Centos7. The demo is not tested or has any scripts for Windows.
 * Oracle 12c or higher. (For a non licensed environment I strongly recommend to use Oracle 18c Express Edition or higher) 
@@ -234,8 +233,7 @@ When everything is in place you will have information about all F1 seasons, all 
 
 All the code is in the subfolder "f1_son_to_oracle_relational" in this github repo.
 
-How to install the basetables and start load the data from ergast ?
--------------------------------------------------------------------
+## How to install the basetables and start load the data from ergast ?
 
 1. First you need to run the "setup_schema.sql" script as SYS.
 
@@ -272,8 +270,8 @@ Check for any errors. I recommend to use SQL*Developer to check for any invalid 
 scheduler job to make sure it runs as intended. The job is defaulted to start 20:00 everyday. if everyting works so it might take some
 time before you see any data starting to be loaded into the base tables.
 
-How to use the data for analysis ?
----------------------------------
+## How to use the data for analysis ?
+
 
 I have provided a SQL script called "queries.sql" you can use for start analysing the data. I also provided a number of materialized views that speeds up some queries due to minimize parsing time when joining different tables with each others.
 
