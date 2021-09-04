@@ -25,7 +25,7 @@ https://oracle-base.com
 
 You can use a browser like Chromium, Safari, Firefox to call the published services but the demo also includes som examples made with the nodejs engine to show that you can call Oracle Rest enabled services from any language supporting JSON and REST calls. You could easy create a client in any language like python, ruby or even in C. See your platform for how to install node. (It's easy) if you intend to try out the node part of the code
 
-Configuring ORDS:
+## Configuring ORDS (Oracle Rest Data Services):
 
 a) Install Oracle Application Express (APEX) if not installed in the datbase you intend to run this demo against.
 
@@ -110,6 +110,7 @@ You ofcause needs to edit the paths below if you have another user then test set
 
 startords:
 
+```
 #!/bin/bash
 export PATH=/usr/sbin:/usr/local/bin:/usr/bin:/usr/local/sbin:$PATH
 LOGFILE=/home/test/ords/logs/ords-`date +"%Y""%m""%d"`.log
@@ -117,12 +118,15 @@ cd /home/test/ords/ords191
 export JAVA_OPTIONS="-Dorg.eclipse.jetty.server.Request.maxFormContentSize=3000000"
 nohup java ${JAVA_OPTIONS} -jar ords.war standalone >> $LOGFILE 2>&1 &
 echo "View log file with : tail -f $LOGFILE"
+```
 
 stopords:
 
+```
 #!/bin/bash
 export PATH=/usr/sbin:/usr/local/bin:/usr/bin:/usr/local/sbin:$PATH
 kill `ps -ef | grep ords.war | awk '{print $2}'` >/dev/null 2>&1stopords:
+```
 
 d) Now you can try out to see if APEX and ORDS works as intended by using a browser and a URL like:
 
@@ -158,9 +162,8 @@ done by calling the following url:
 
 http://localhost:8080/ords/xepdb1/rest_data/testmodule/country/Sweden
 
-How does this work e.g how do we get our relational data out as JSON ?
-----------------------------------------------------------------------
-
+## How does this work e.g how do we get our relational data out as JSON ?
+ 
 First of all look at the sql script REST_SETUP.sql
 This script instructs Oracle to enable REST for the Oracle schema rest_data and is a way of granting permission
 to allow data to be called from the ORDS service.
@@ -177,8 +180,7 @@ This is where we tell ORDS how to map the PL/SQL packaged code back to URL where
 even allow for calling the PL/SQL package with paramters like what country we want statistics for
 as in the above example where we look at the population for Sweden.
 
-Using the node example code written in node:
-----------------------------
+## Using the node example code written in nodejs.
 
 If you don't want to write your own client you could test out the provided example code written for nodejs
 Installing nodejs is reallys simple. For more information on how to get started see https://nodejs.org/en/
@@ -200,10 +202,9 @@ $ node sweden_graph.js
 There is one configuration file you need to be aware of. You can change the "resturl" value for all
 of the node apps in "config.json" so it matches your environment. 
 
-How to consume a REST service and transform JSON to Relational data for SQL analysis ?
---------------------------------------------------------------------------------------
+# How to consume a REST service and transform JSON to Relational data for SQL analysis ?
 
-Requirements:
+## Requirements:
 
 * Linux environment supported like Centos7. The demo is not tested or has any scripts for Windows.
 * Oracle 12c or higher. (For a non licensed environment I strongly recommend to use Oracle 18c Express Edition or higher) 
@@ -232,8 +233,7 @@ When everything is in place you will have information about all F1 seasons, all 
 
 All the code is in the subfolder "f1_son_to_oracle_relational" in this github repo.
 
-How to install the basetables and start load the data from ergast ?
--------------------------------------------------------------------
+## How to install the basetables and start load the data from ergast ?
 
 1. First you need to run the "setup_schema.sql" script as SYS.
 
@@ -258,23 +258,22 @@ select apex_web_service.make_rest_request(
     p_http_method => 'GET' 
 ) as result from dual;
 
-2. When, and only when the query above works it is time to setup the schema and initiate the job to start download data from ergast.com
-This is done by running the "setup_objs.sql" scipt to initiate all tables and views and the scheduler job.
-The script should only be run as the "F1_DATA" schema user.
+2. When, and only when the query above works it is time to setup the schema and initiate tables, views and setup scheduled jobs
+for downloading data from ergast
 
-a) SQL> conn F1_DATA/oracle
+As the SYS user runt the following scripts
 
-b) SQL> @setup_objs.sql
+ ```
+SQL> conn sys@<TNS-ALIAS> as sysdba 
+SQL> @setup_schemas.sql
+SQL> @setup_objs.sql
+```
+ 
+You will get some errors due to way the scripts where generated som indexes are duplicated. You can however just ignore them.
 
-Check for any errors. I recommend to use SQL*Developer to check for any invalid objects and re-compile them and also look at the
-scheduler job to make sure it runs as intended. The job is defaulted to start 20:00 everyday. if everyting works so it might take some
-time before you see any data starting to be loaded into the base tables.
+## How to use the data for analysis ?
 
-How to use the data for analysis ?
----------------------------------
 
 I have provided a SQL script called "queries.sql" you can use for start analysing the data. I also provided a number of materialized views that speeds up some queries due to minimize parsing time when joining different tables with each others.
 
-There is also som additional script for handling ORDS AutoRest (E.g publish back the relational data as REST services). Scripts for allowing other users then F1_ACCESS to access data thru views and som python scripts for loading images of drivers,tracks etc. See the included README_FIRST.txt for more information.
-
-I'm currently building a APEX application ontop of the data but it's not yet ready but the query part might be interesting nevertheless.
+There is also som additional script for handling ORDS AutoRest (E.g publish back the relational data as REST services). Scripts for allowing other users then F1_ACCESS to access data thru views and som python scripts for loading images of drivers,tracks etc and Jupyter Notebook examples on how to plot graphs using pandas and mathplotlib for the Formula 1 2021 season. See the included README_FIRST.txt for more information.
