@@ -66,7 +66,14 @@ where to_number(vfr.season) = to_number(to_char(trunc(sysdate),'RRRR'))
 order by to_number(vfr.position) asc
 fetch first 10 rows only;
 
+-- Show us the polesitters for the current season
 
+select familyname
+      ,count(familyname) as pole_positions
+from v_f1_qualificationtimes
+where season = to_number(to_char(sysdate,'RRRR'))
+  and position = 1
+group by familyname;
 
 -- Give us all world champions in Formula 1!!
 select
