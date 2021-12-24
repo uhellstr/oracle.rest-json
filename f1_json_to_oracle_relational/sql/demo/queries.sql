@@ -7,6 +7,35 @@
 
 alter session set statistics_level=ALL;
 
+-- Give us the current standings in the current season
+alter session set nls_numeric_characters = '.,';
+
+select vfd.season
+       ,rownum as position
+       ,vfd.race
+       ,vfd.points
+       ,vfd.givenname
+       ,vfd.familyname
+       ,vfd.constructorid
+from v_f1_driverstandings vfd
+where vfd.season = (select season -- Is current season finished yet?
+                       from
+                       (
+                         select to_date(r.race_date,'RRRR-MM-DD') as race_date
+                                ,case 
+                                   when r.race_date < trunc(sysdate) then to_char(trunc(sysdate),'RRRR')
+                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
+                                   else '1900'
+                                 end as season
+                         from f1_access.v_f1_seasons_race_dates r
+                         where r.season = vfd.season
+                           and to_number(r.round) in (select max(to_number(rd.round)) from f1_access.v_f1_seasons_race_dates rd
+                                                      where rd.season  = r.season)
+                        ))
+order by to_number(points) desc;
+
+alter session set nls_numeric_characters = ',.';
+
 -- Give us the race winner and drivers with score for the last race
 
 select
