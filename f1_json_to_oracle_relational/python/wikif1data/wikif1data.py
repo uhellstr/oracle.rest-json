@@ -130,7 +130,7 @@ where info is not null
 """
 def get_image_from_f1_wiki(driverid,imageurl):
 
-    if imageurl is not "null":
+    if imageurl != "null":
         imagename = workingdir+"/images/"+driverid+".jpg"
         resp = requests.get(imageurl, stream=True)
         local_file = open(imagename, 'wb')
@@ -157,6 +157,7 @@ def get_image_urls(driver_list):
         covers = soup.select('table.infobox a.image img[src]')
         for cover in covers:
             imageurl = "https:"+ cover['src']
+            break
         val = str(driverid)+"|"+str(wikiurl)+"|"+str(imageurl)    
         image_list.append(val)
         get_image_from_f1_wiki(driverid,imageurl)
