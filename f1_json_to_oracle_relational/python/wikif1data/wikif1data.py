@@ -37,6 +37,8 @@ import getopt
 import base64
 import os
 import shutil
+import time
+import filetype
 
 # Import oraclepackage module
 workingdir = os.getcwd()
@@ -130,14 +132,39 @@ where info is not null
 """
 def get_image_from_f1_wiki(driverid,imageurl):
 
+    reload = True
     if imageurl != "null":
-        imagename = workingdir+"/images/"+driverid+".jpg"
+
+        imgextension = ""
+        print("Downloading driver image from wikipedia.")
+
+        if imageurl[-4:].lower() == "jpeg":
+            imgextension = ".jpg"        
+        if imageurl[-4:].lower() == ".jpg":
+            imgextension = ".jpg"
+        if imageurl[-4:].lower() == ".gif":
+            imgextension = ".gif"    
+        if imageurl[-4:].lower() == ".png":
+            imgextension = ".png"
+        
+        print(imageurl)
+        imagename = workingdir+"/images/"+driverid+imgextension
+        print(imagename)
         resp = requests.get(imageurl, stream=True)
         local_file = open(imagename, 'wb')
         resp.raw.decode_content = True
-        shutil.copyfileobj(resp.raw, local_file)
+        shutil.copyfileobj(resp.raw, local_file)      
         del resp
-
+        
+        if filetype.is_image(imagename):
+            print(f"{imagename} is a valid image...")
+        else:
+            print(f"{imagename} is NOT a valid image...fixing it")
+            os.remove(imagename)
+            shutil.copy(workingdir+"/"+"avatar.png",workingdir+"/images/"+driverid+".png")
+    else:
+        shutil.copy(workingdir+"/"+"avatar.png",workingdir+"/images/"+driverid+".png")
+ 
 """
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     Author: Ulf Hellstrom, oraminute@gmail.com
@@ -158,7 +185,11 @@ def get_image_urls(driver_list):
         for cover in covers:
             imageurl = "https:"+ cover['src']
             break
-        val = str(driverid)+"|"+str(wikiurl)+"|"+str(imageurl)    
+        print("Original image: " + imageurl)
+        if imageurl == "null":
+            val = str(driverid)+"|"+"null"+"|"+"null"
+        else:           
+            val = str(driverid)+"|"+str(wikiurl)+"|"+str(imageurl)    
         image_list.append(val)
         get_image_from_f1_wiki(driverid,imageurl)
 
@@ -171,24 +202,29 @@ def get_image_urls(driver_list):
 """
 def insert_image_data(connection,imageinfo):
 
-    imagename = workingdir+"/images/"
+    imagedir = workingdir+"/images/"
+    imagename=""
     driverid = oramodule.split_list(imageinfo,'|',0)
     checkimage = oramodule.split_list(imageinfo,'|',2)
-    imagename = workingdir+"/images/"+driverid+".jpg"
-    #print("checkimage is: "+checkimage)
-    if checkimage.startswith("https:"):
-        print("Insert into F1_DATA: "+driverid+","+imagename)
-        with open(imagename, 'rb') as f:
-            imgdata = f.read()
-        with open(imagename, "rb") as img_file:
-            base64img = base64.b64encode(img_file.read())    
-        cursor = connection.cursor()
-        cursor.execute("""
-         insert into f1_data.F1_DATA_DRIVER_IMAGES (driverid,image,image_base64,image_type)
-         values (:driverid, :blobdata,:base64data,:type)""",
-            driverid=driverid, blobdata=imgdata,base64data=base64img,type='jpg')
-        connection.commit()    
-        cursor.close()
+    # Find a file starting with driverid in the image catalog    
+    for i in os.listdir(imagedir):
+        if os.path.isfile(os.path.join(imagedir,i)) and i.startswith(driverid):
+            imagename = imagedir+i
+            break
+    # Generate extension for image to store together with image
+    imageext = imagename[-3:].lower()
+    print("imagename is: "+imagename)
+    print("image extension is: "+imageext)
+    print("Insert into F1_DATA: "+driverid+","+imagename)
+    with open(imagename, 'rb') as f:
+        imgdata = f.read()
+    with open(imagename, "rb") as img_file:
+        base64img = base64.b64encode(img_file.read())    
+    cursor = connection.cursor()
+    cursor.execute("""insert into f1_data.F1_DATA_DRIVER_IMAGES (driverid,image,image_base64,image_type) values (:driverid, :blobdata,:base64data,:type)""",
+                   driverid=driverid, blobdata=imgdata,base64data=base64img,type=imageext)
+    connection.commit()    
+    cursor.close()
 
 """
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
