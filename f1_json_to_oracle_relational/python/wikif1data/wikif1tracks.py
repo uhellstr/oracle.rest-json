@@ -5,7 +5,7 @@ r"""
 #
 # _____ _   ____    _  _____  _    
 #|  ___/ | |  _ \  / \|_   _|/ \   
-#| |_  | | | | | |/ _ \ | | / _ \  Additional wiki url of images of F1 tracjs
+#| |_  | | | | | |/ _ \ | | / _ \  Additional wiki url of images of F1 tracks
 #|  _| | | | |_| / ___ \| |/ ___ \ 
 #|_|   |_| |____/_/   \_\_/_/   \_\
 #
@@ -14,15 +14,17 @@ r"""
 # about strange characters within this comment :-)
 # Do not remove the leading "r"!!
 #
-#               Generate csv file with url for image of f1 drivers
+#               Generate csv file with url for image of f1 tracks
 #               * Requires Oracle 12c instant client or higher
 #               * Python 3.x or higher with cx_Oracle module installed
-#               By Ulf Hellstrom,oraminute@gmail.com , EpicoTech 2019
+#               By Ulf Hellstrom,oraminute@gmail.com , EpicoTech 2019-2021
 #
 #
 #               Requires cx_Oracle installed
 #               Requires pip install bs4
 #               Requires pip install requests
+#               Requires pip install filetype
+#               Requires pip install time
 #            
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 """
@@ -37,6 +39,8 @@ import getopt
 import base64
 import os
 import shutil
+import time
+import filetype
 
 # Import oraclepackage module
 workingdir = os.getcwd()
@@ -131,18 +135,52 @@ order by season,race
 def get_image_from_f1_wiki(circuitid,year,imageurl):
 
     if imageurl != "null":
+
+        imgextension = ""
+        print("Downloading track image from wikipedia.")
+
+        if imageurl[-4:].lower() == "jpeg":
+            imgextension = ".jpg"        
+        if imageurl[-4:].lower() == ".jpg":
+            imgextension = ".jpg"
+        if imageurl[-4:].lower() == ".gif":
+            imgextension = ".gif"    
+        if imageurl[-4:].lower() == ".png":
+            imgextension = ".png"
+        
+        print("image url: "+imageurl)
+        imagename = workingdir+"/images/"+circuitid+"_"+year+imgextension
+        print(imagename)
+        resp = requests.get(imageurl, stream=True)
+        local_file = open(imagename, 'wb')
+        resp.raw.decode_content = True
+        shutil.copyfileobj(resp.raw, local_file)      
+        del resp
+        
+        if filetype.is_image(imagename):
+            print(f"{imagename} is a valid image...")
+        else:
+            print(f"{imagename} is NOT a valid image...fixing it")
+            os.remove(imagename)
+            shutil.copy(workingdir+"/"+"avatar.png",workingdir+"/images/"+circuitid+"_"+year+".png")
+    else:
+        shutil.copy(workingdir+"/"+"avatar.png",workingdir+"/images/"+circuitid+"_"+year+".png")
+    """
+    if imageurl != "null":
         imagename = workingdir+"/images/"+circuitid+"_"+year+".jpg"
         resp = requests.get(imageurl, stream=True)
         local_file = open(imagename, 'wb')
         resp.raw.decode_content = True
         shutil.copyfileobj(resp.raw, local_file)
         del resp
+    """
 
 """
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     Author: Ulf Hellstrom, oraminute@gmail.com
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 """
+""""
 def get_image_urls(track_list):
 
     image_list = []
@@ -162,7 +200,33 @@ def get_image_urls(track_list):
         val = str(season)+"|"+str(circuitid)+"|"+str(race)+"|"+str(wikiurl)+"|"+str(imageurl)    
         image_list.append(val)
         get_image_from_f1_wiki(circuitid,season,imageurl)
+"""
 
+def get_image_urls(track_list):
+
+    image_list = []
+    for val in track_list:
+        imageurl="null"
+        season = oramodule.split_list(val,',',0)
+        circuitid = oramodule.split_list(val,',',1)
+        print("Fetching wiki data for: "+circuitid)
+        wikiurl  = oramodule.split_list(val,',',3)
+        print(wikiurl)
+        race = oramodule.split_list(val,',',2)
+        r = requests.get(wikiurl)
+        soup = BeautifulSoup(r.content,'html.parser')
+        covers = soup.select('table.infobox a.image img[src]')
+        for cover in covers:
+            imageurl = "https:"+ cover['src']
+            break
+        print("Original image: " + imageurl)
+        if imageurl == "null":
+            val = str(season)+"|"+str(circuitid)+"|"+str(race)+"|"+str(wikiurl)+"|null"
+        else:           
+            val = str(season)+"|"+str(circuitid)+"|"+str(race)+"|"+str(wikiurl)+"|"+str(imageurl)   
+        image_list.append(val)
+        get_image_from_f1_wiki(circuitid,season,imageurl)
+          
     return image_list  
 
 """
@@ -172,44 +236,38 @@ def get_image_urls(track_list):
 """
 def insert_image_data(connection,imageinfo):
 
-    imagename = workingdir+"/images/"
+    imagedir = workingdir+"/images/"
     season = oramodule.split_list(imageinfo,'|',0)
     circuitid = oramodule.split_list(imageinfo,'|',1)
     race = oramodule.split_list(imageinfo,'|',2)
-    checkimage = oramodule.split_list(imageinfo,'|',3)
+    checkimage = oramodule.split_list(imageinfo,'|',3) # Find a file starting with circuitid in the image catalog    
+    for i in os.listdir(imagedir):
+        if os.path.isfile(os.path.join(imagedir,i)) and i.startswith(circuitid+"_"+season):
+            imagename = imagedir+i
+            break
+    # Generate extension for image to store together with image
+    imageext = imagename[-3:].lower()
+    print("imagename is: "+imagename)
+    print("image extension is: "+imageext)
+    print("Insert into F1_DATA: "+circuitid+","+imagename)
     print("checkimage is: "+checkimage)
-    if checkimage != "null":
-        imagename = workingdir+"/images/"+circuitid+"_"+season+".jpg"
-        print(imagename)
-        if checkimage.startswith("http"):
-            print("Insert into F1_DATA: "+circuitid+","+imagename)
-            try:
-                with open(imagename, 'rb') as f:
-                    imgdata = f.read()
-            except Exception:
-                imgdata = None
-                pass
-            try:
-                with open(imagename, "rb") as img_file:
-                    base64img = base64.b64encode(img_file.read())
-            except Exception:
-                base64img = None
-                pass
+    with open(imagename, 'rb') as f:
+        imgdata = f.read()
+    with open(imagename, "rb") as img_file:
+        base64img = base64.b64encode(img_file.read())   
 
-            cursor = connection.cursor()
-            try:
-                cursor.execute("""
-                insert into f1_data.F1_DATA_TRACK_IMAGES (circuitid,year,race,image,image_base64,image_type)
-                values (:circuitid,:year,:race,:blobdata,:base64data,:type)""",
-                circuitid=circuitid,year=season,race=race,blobdata=imgdata,base64data=base64img,type='jpg')
-                connection.commit()
-            except Exception:
-                connection.rollback()
-                pass  
+    cursor = connection.cursor()
+    try:
+        cursor.execute("""
+        insert into f1_data.F1_DATA_TRACK_IMAGES (circuitid,year,race,image,image_base64,image_type)
+        values (:circuitid,:year,:race,:blobdata,:base64data,:type)""",
+        circuitid=circuitid,year=season,race=race,blobdata=imgdata,base64data=base64img,type=imageext)
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        pass  
 
-            cursor.close()
-    else:
-        print("Missing image data for: "+season+","+race+","+circuitid)        
+    cursor.close()
 
 """
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -246,10 +304,12 @@ def main():
     wikilist = get_image_urls(tracks)
     csvfile = open(outputfile,'w')
     for val in wikilist:
-        insert_image_data(connection,val)
+        #insert_image_data(connection,val)
         csvfile.write(val)
         csvfile.write('\n')
     csvfile.close()
+    for val in wikilist:
+        insert_image_data(connection,val)    
     connection.close()
 
 if __name__ == "__main__":
