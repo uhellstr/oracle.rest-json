@@ -1,3 +1,5 @@
 .DS_Store
 f1_json_to_oracle_relational/python/AutoRestTest/.ipynb_checkpoints/ORDSF1REST-checkpoint.ipynb
 f1_json_to_oracle_relational/python/oraclepackage/__pycache__/oramodule.cpython-38.pyc
+f1_json_to_oracle_relational/python/wikif1data/wikidata.csv
+f1_json_to_oracle_relational/python/wikif1data/wikif1_2021_12_29_11_16.log

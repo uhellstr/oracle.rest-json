@@ -7,6 +7,21 @@
 
 alter session set statistics_level=ALL;
 
+-- Tracks and races in order by season and race
+select vt.circuitid
+       ,vt.info
+       ,vt.circuitname
+       ,vr.season
+       ,vr.round
+       ,vr.lat
+       ,vr.longitude
+       ,vr.locality
+       ,vr.country
+from v_f1_tracks vt
+inner join v_f1_races vr
+on vt.circuitid = vr.circuitid
+order by to_number(vr.season) desc, to_number(vr.round) asc;
+
 -- Give us the current standings in the current season
 alter session set nls_numeric_characters = '.,';
 

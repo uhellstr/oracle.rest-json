@@ -15,3 +15,21 @@ CREATE OR REPLACE VIEW APEX_F1_DATA.R_MV_F1_LAP_TIMES AS SELECT * FROM APEX_F1_D
 CREATE OR REPLACE VIEW APEX_F1_DATA.R_MV_F1_QUALIFICATION_TIMES AS SELECT * FROM APEX_F1_DATA.S_MV_F1_QUALIFICATION_TIMES;
 CREATE OR REPLACE VIEW APEX_F1_DATA.R_MV_F1_RESULTS AS SELECT * FROM APEX_F1_DATA.S_MV_F1_RESULTS;
 CREATE OR REPLACE VIEW APEX_F1_DATA.R_F1_DRIVER_IMAGES AS SELECT * FROM APEX_F1_DATA.S_F1_DRIVER_IMAGES;
+
+-- Additional views created 
+
+-- Handle tracks used during a season
+create or replace view apex_f1_data.r_f1_seasons_and_tracks as
+select vt.circuitid
+       ,vt.info
+       ,vt.circuitname
+       ,vr.season
+       ,vr.round
+       ,vr.lat
+       ,vr.longitude
+       ,vr.locality
+       ,vr.country
+from r_f1_tracks vt
+inner join r_f1_races vr
+on vt.circuitid = vr.circuitid
+order by to_number(vr.season) desc, to_number(vr.round) asc;
