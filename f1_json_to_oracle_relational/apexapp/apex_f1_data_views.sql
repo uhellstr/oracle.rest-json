@@ -25,8 +25,8 @@ select vt.circuitid
        ,vt.circuitname
        ,vr.season
        ,vr.round
-       ,vr.lat
-       ,vr.longitude
+       ,to_number(vr.lat,'9999.99999999') as lat 
+       ,to_number(vr.longitude,'9999.99999999') as longitude
        ,vr.locality
        ,vr.country
 from r_f1_tracks vt

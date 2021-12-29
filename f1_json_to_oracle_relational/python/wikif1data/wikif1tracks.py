@@ -130,7 +130,7 @@ order by season,race
 """
 def get_image_from_f1_wiki(circuitid,year,imageurl):
 
-    if imageurl is not "null":
+    if imageurl != "null":
         imagename = workingdir+"/images/"+circuitid+"_"+year+".jpg"
         resp = requests.get(imageurl, stream=True)
         local_file = open(imagename, 'wb')
@@ -178,7 +178,7 @@ def insert_image_data(connection,imageinfo):
     race = oramodule.split_list(imageinfo,'|',2)
     checkimage = oramodule.split_list(imageinfo,'|',3)
     print("checkimage is: "+checkimage)
-    if checkimage is not "null":
+    if checkimage != "null":
         imagename = workingdir+"/images/"+circuitid+"_"+season+".jpg"
         print(imagename)
         if checkimage.startswith("http"):
