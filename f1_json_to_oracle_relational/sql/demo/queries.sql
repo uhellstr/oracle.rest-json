@@ -17,8 +17,8 @@ select vt.circuitid
        ,vr.longitude
        ,vr.locality
        ,vr.country
-from v_f1_tracks vt
-inner join v_f1_races vr
+from f1_access.v_f1_tracks vt
+inner join f1_access.v_f1_races vr
 on vt.circuitid = vr.circuitid
 order by to_number(vr.season) desc, to_number(vr.round) asc;
 
@@ -32,7 +32,7 @@ select vfd.season
        ,vfd.givenname
        ,vfd.familyname
        ,vfd.constructorid
-from v_f1_driverstandings vfd
+from f1_access.v_f1_driverstandings vfd
 where vfd.season = (select season -- Is current season finished yet?
                        from
                        (
@@ -49,20 +49,16 @@ where vfd.season = (select season -- Is current season finished yet?
                         ))
 order by to_number(points) desc;
 
-alter session set nls_numeric_characters = ',.';
+--alter session set nls_numeric_characters = ',.';
 
 -- Give us the race winner and drivers with score for the last race
 
 select
   vfr.season,
   vfr.race,
-  --vfr.info,
   vfr.racename,
   vfr.circuitid,
-  --vfr.url,
   vfr.circuitname,
-  --lat,
-  --lon,
   vfr.locality,
   vfr.country,
   vfr.racedate,
@@ -71,13 +67,11 @@ select
   vfr.positiontext,
   vfr.points,
   vfr.driverid,
-  --vfr.drivurl,
   vfr.givenname,
   vfr.familyname,
   vfr.dateofbirth,
   vfr.nationality,
   vfr.constructorid,
-  --vfr.constructorinfo,
   vfr.constructorname,
   vfr.constructornationality,
   vfr.grid,
@@ -91,9 +85,9 @@ select
   vfr.racetime
 from
   f1_access.v_mv_f1_results vfr
-where to_number(vfr.season) = to_number(to_char(trunc(sysdate),'RRRR'))
+where vfr.season = to_number(to_char(trunc(sysdate),'RRRR'))
   and position is not null
-  and to_number(vfr.race) = (with last_race as -- we need to check if any upcoming races or if the last race for the season is done.
+  and vfr.race = (with last_race as -- we need to check if any upcoming races or if the last race for the season is done.
                               (
                                 select nvl(min(to_number(round))-1,-1) as race -- check if any upcoming races this seaseon -1 and season is done
                                 from f1_access.v_f1_upcoming_races
@@ -110,12 +104,48 @@ where to_number(vfr.season) = to_number(to_char(trunc(sysdate),'RRRR'))
 order by to_number(vfr.position) asc
 fetch first 10 rows only;
 
+-- Get the dominating teams for each season
+with f1_wins as
+(
+select
+    vfr.season,
+    count(vfr.position) as wins,
+    vfr.constructorinfo,
+    vfr.constructorname,
+    vfr.constructornationality
+from f1_access.v_mv_f1_results vfr
+where vfr.position = 1
+group by vfr.season,
+      vfr.constructorinfo,
+      vfr.constructorname,
+      vfr.constructornationality
+)
+select *
+from
+(
+select x.season
+       ,x.wins
+       ,max(to_number(r.round)) as races
+       ,round((x.wins/max(to_number(r.round)))*100,1) as percentwins
+       ,x.constructorname
+       ,x.constructornationality
+       ,x.constructorinfo
+from f1_wins x
+inner join f1_access.v_f1_races r
+on to_number(r.season) = x.season
+group by x.season
+         ,x.wins
+         ,x.constructorname
+         ,x.constructornationality
+         ,x.constructorinfo
+) order by season desc, wins desc;
+
 -- Show us the polesitters for the current season
 
 select familyname
       ,count(familyname) as pole_positions
-from v_f1_qualificationtimes
-where season = to_number(to_char(sysdate,'RRRR'))
+from f1_access.v_f1_qualificationtimes
+where season = to_char(sysdate,'RRRR')
   and position = 1
 group by familyname;
 
@@ -541,8 +571,8 @@ group by q.season
        ,q.givenname
        ,q.familyname
        ,q.constructorname
-) order by season desc,
-           number_of_poles desc;
+) 
+order by season desc, number_of_poles desc;
            
 -- Give us all polesitters and number of polepositions thru the history since about 2000 and forward
 -- Note: Ergast dont give us all data so we only see absolute correct data from 2003 and forward
