@@ -15,7 +15,7 @@ CREATE OR REPLACE VIEW APEX_F1_DATA.R_MV_F1_LAP_TIMES AS SELECT * FROM APEX_F1_D
 CREATE OR REPLACE VIEW APEX_F1_DATA.R_MV_F1_QUALIFICATION_TIMES AS SELECT * FROM APEX_F1_DATA.S_MV_F1_QUALIFICATION_TIMES;
 CREATE OR REPLACE VIEW APEX_F1_DATA.R_MV_F1_RESULTS AS SELECT * FROM APEX_F1_DATA.S_MV_F1_RESULTS;
 CREATE OR REPLACE VIEW APEX_F1_DATA.R_F1_DRIVER_IMAGES AS SELECT * FROM APEX_F1_DATA.S_F1_DRIVER_IMAGES;
-
+CREATE OR REPLACE VIEW APEX_F1_DATA.R_F1_TRACK_IMAGES AS SELECT * FROM APEX_F1_DATA.S_F1_TRACK_IMAGES;
 -- Additional views created 
 
 -- Handle tracks used during a season
@@ -29,7 +29,45 @@ select vt.circuitid
        ,to_number(vr.longitude,'9999.99999999') as longitude
        ,vr.locality
        ,vr.country
-from r_f1_tracks vt
-inner join r_f1_races vr
+from apex_f1_data.r_f1_tracks vt
+inner join apex_f1_data.r_f1_races vr
 on vt.circuitid = vr.circuitid
 order by to_number(vr.season) desc, to_number(vr.round) asc;
+
+-- Dominating teams 
+
+create or replace view apex_f1_data.r_f1_dominating_teams as
+with f1_wins as
+(
+select
+    vfr.season,
+    count(vfr.position) as wins,
+    vfr.constructorinfo,
+    vfr.constructorname,
+    vfr.constructornationality
+from apex_f1_data.r_mv_f1_results vfr
+where vfr.position = 1
+group by vfr.season,
+      vfr.constructorinfo,
+      vfr.constructorname,
+      vfr.constructornationality
+)
+select *
+from
+(
+select x.season
+       ,x.wins
+       ,max(to_number(r.round)) as races
+       ,round((x.wins/max(to_number(r.round)))*100,1) as percentwins
+       ,x.constructorname
+       ,x.constructornationality
+       ,x.constructorinfo
+from f1_wins x
+inner join apex_f1_data.r_f1_races r
+on to_number(r.season) = x.season
+group by x.season
+         ,x.wins
+         ,x.constructorname
+         ,x.constructornationality
+         ,x.constructorinfo
+) order by season desc, wins desc;
