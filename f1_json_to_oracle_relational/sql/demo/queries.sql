@@ -1,6 +1,7 @@
 -- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -- This is a testsuite of different queries against the F1 database
 --                   Run these queries as F1_ACCESS
+-- Author: Ulf Hellstrom
 -- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -- If you need more data for dbms_xplan
@@ -22,7 +23,9 @@ inner join f1_access.v_f1_races vr
 on vt.circuitid = vr.circuitid
 order by to_number(vr.season) desc, to_number(vr.round) asc;
 
--- Give us the current standings in the current season
+-- Give us the current standings in the current season or if between seasons the last season
+-- Depending on your NLS settings you might have to set numeric_characters correct
+
 alter session set nls_numeric_characters = '.,';
 
 select vfd.season
@@ -33,16 +36,24 @@ select vfd.season
        ,vfd.familyname
        ,vfd.constructorid
 from f1_access.v_f1_driverstandings vfd
-where vfd.season = (select season -- Is current season finished yet?
+where vfd.season = (with future_races as -- We need to handle between seasons where there are no races
+                    (
+                      select count(vfu.season) as any_races
+                      from f1_access.v_f1_upcoming_races vfu
+                      where vfu.season = to_char(trunc(sysdate,'RRRR'))
+                    )
+                    select season -- Is current season finished yet?
                        from
                        (
                          select to_date(r.race_date,'RRRR-MM-DD') as race_date
-                                ,case 
+                                ,case
+                                   when (r.race_date < trunc(sysdate) and x.any_races < 1) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
                                    when r.race_date < trunc(sysdate) then to_char(trunc(sysdate),'RRRR')
                                    when r.race_date > trunc(sysdate) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
                                    else '1900'
                                  end as season
                          from f1_access.v_f1_seasons_race_dates r
+                              ,future_races x
                          where r.season = vfd.season
                            and to_number(r.round) in (select max(to_number(rd.round)) from f1_access.v_f1_seasons_race_dates rd
                                                       where rd.season  = r.season)
@@ -51,7 +62,8 @@ order by to_number(points) desc;
 
 --alter session set nls_numeric_characters = ',.';
 
--- Give us the race winner and drivers with score for the last race
+-- Give us the race winner and drivers with score for the last race in 
+-- current season or last season if between seasons.
 
 select
   vfr.season,
@@ -85,24 +97,122 @@ select
   vfr.racetime
 from
   f1_access.v_mv_f1_results vfr
-where vfr.season = to_number(to_char(trunc(sysdate),'RRRR'))
+where vfr.season = (with future_races as -- We need to handle between seasons where there are no races
+                    (
+                      select count(vfu.season) as any_races
+                      from f1_access.v_f1_upcoming_races vfu
+                      where vfu.season = to_char(trunc(sysdate,'RRRR'))
+                    )
+                    select season -- Is current season finished yet?
+                       from
+                       (
+                         select to_date(r.race_date,'RRRR-MM-DD') as race_date
+                                ,case
+                                   when (r.race_date < trunc(sysdate) and x.any_races < 1) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
+                                   when r.race_date < trunc(sysdate) then to_char(trunc(sysdate),'RRRR')
+                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
+                                   else '1900'
+                                 end as season
+                         from f1_access.v_f1_seasons_race_dates r
+                              ,future_races x
+                         where r.season = vfr.season
+                           and to_number(r.round) in (select max(to_number(rd.round)) from f1_access.v_f1_seasons_race_dates rd
+                                                      where rd.season  = r.season)
+                        ))
   and position is not null
   and vfr.race = (with last_race as -- we need to check if any upcoming races or if the last race for the season is done.
                               (
-                                select nvl(min(to_number(round))-1,-1) as race -- check if any upcoming races this seaseon -1 and season is done
-                                from f1_access.v_f1_upcoming_races
-                                where to_number(season) = to_number(to_char(trunc(sysdate),'RRRR'))
-                                  --and to_date(race_date,'RRRR-MM-DD') <= trunc(sysdate)
+                                select nvl(min(to_number(x.round))-1,-1) as race -- check if any upcoming races this seaseon -1 and season is done
+                                from f1_access.v_f1_upcoming_races x
+                                where x.season = to_char(trunc(sysdate,'RRRR'))
                               )
-                              select case when race = -1 then (select max(to_number(round))
-                                                               from  f1_access.v_f1_races
-                                                               where to_number(season) = to_number(to_char(trunc(sysdate),'RRRR')))
+                              select case when race = -1 then (select max(to_number(y.round))
+                                                               from  f1_access.v_f1_races y
+                                                               where y.season = vfr.season)
                                       else race
                                       end race
                                       from last_race
                             )
 order by to_number(vfr.position) asc
 fetch first 10 rows only;
+
+-- Get the starting grid for the latest race in current season or
+-- if between seasons the last race of the last season.
+select
+  vfq.season,
+  vfq.round,
+  vfq.circuitname,
+  vfq.locality,
+  vfq.country,
+  vfq.racedate,
+  vfq.drivernumber,
+  vfq.permanentnumber,
+  vfq.code,
+  vfq.givenname,
+  vfq.familyname, 
+  vfq.nationality,
+  vfq.constructor,
+  vfq.constructornationality,
+  case 
+  when vfq.q3 is not null and vfq.q2 is not null and vfq.q1 is not null then
+    'Q3'
+  when vfq.q3 is null and vfq.q2 is not null and vfq.q1 is not null then 
+    'Q2'
+  when vfq.q3 is null and vfq.q2 is null and vfq.q1 is not null then
+    'Q1'
+  else
+    null
+  end as qualification,  
+  case 
+  when vfq.q3 is not null and vfq.q2 is not null and vfq.q1 is not null then
+    q3
+  when vfq.q3 is null and vfq.q2 is not null and vfq.q1 is not null then 
+    q2
+  when vfq.q3 is null and vfq.q2 is null and vfq.q1 is not null then
+    q1
+  else
+    null
+  end as qualification_time,
+  to_number(vfq.position) as starting_grid
+from
+  f1_access.v_mv_f1_qualification_times vfq
+where vfq.season = (with future_races as -- We need to handle between seasons where there are no races
+                    (
+                      select count(vfu.season) as any_races
+                      from f1_access.v_f1_upcoming_races vfu
+                      where vfu.season = to_char(trunc(sysdate,'RRRR'))
+                    )
+                    select season -- Is current season finished yet?
+                       from
+                       (
+                         select to_date(r.race_date,'RRRR-MM-DD') as race_date
+                                ,case
+                                   when (r.race_date < trunc(sysdate) and x.any_races < 1) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
+                                   when r.race_date < trunc(sysdate) then to_char(trunc(sysdate),'RRRR')
+                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
+                                   else '1900'
+                                 end as season
+                         from f1_access.v_f1_seasons_race_dates r
+                              ,future_races x
+                         where r.season = vfq.season
+                           and to_number(r.round) in (select max(to_number(rd.round)) from f1_access.v_f1_seasons_race_dates rd
+                                                      where rd.season  = r.season)
+                        ))
+  and position is not null
+  and to_number(round) = (with last_race as -- we need to check if any upcoming races or if the last race for the season is done.
+                              (
+                                select nvl(min(to_number(x.round))-1,-1) as race -- check if any upcoming races this seaseon -1 and season is done
+                                from f1_access.v_f1_upcoming_races x
+                                where x.season = to_char(trunc(sysdate,'RRRR'))
+                              )
+                              select case when race = -1 then (select max(to_number(y.round))
+                                                               from  f1_access.v_f1_races y
+                                                               where y.season = vfq.season)
+                                      else race
+                                      end race
+                                      from last_race
+                            )
+order by to_number(position) asc;
 
 -- Get the dominating teams for each season
 with f1_wins as
@@ -140,14 +250,36 @@ group by x.season
          ,x.constructorinfo
 ) order by season desc, wins desc;
 
--- Show us the polesitters for the current season
+-- Show us the polesitters for the current season or last race
+-- for last season if between seasons.
 
-select familyname
-      ,count(familyname) as pole_positions
-from f1_access.v_f1_qualificationtimes
-where season = to_char(sysdate,'RRRR')
-  and position = 1
-group by familyname;
+select vfq.familyname
+      ,count(vfq.familyname) as pole_positions
+from f1_access.v_f1_qualificationtimes vfq
+where vfq.season = (with future_races as -- We need to handle between seasons where there are no races
+                    (
+                      select count(vfu.season) as any_races
+                      from f1_access.v_f1_upcoming_races vfu
+                      where vfu.season = to_char(trunc(sysdate,'RRRR'))
+                    )
+                    select season -- Is current season finished yet?
+                       from
+                       (
+                         select to_date(r.race_date,'RRRR-MM-DD') as race_date
+                                ,case
+                                   when (r.race_date < trunc(sysdate) and x.any_races < 1) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
+                                   when r.race_date < trunc(sysdate) then to_char(trunc(sysdate),'RRRR')
+                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
+                                   else '1900'
+                                 end as season
+                         from f1_access.v_f1_seasons_race_dates r
+                              ,future_races x
+                         where r.season = vfq.season
+                           and to_number(r.round) in (select max(to_number(rd.round)) from f1_access.v_f1_seasons_race_dates rd
+                                                      where rd.season  = r.season)
+                        ))
+  and vfq.position = 1
+group by vfq.familyname;
 
 -- Give us all world champions in Formula 1!!
 select
@@ -240,6 +372,8 @@ from
 ) order by championships_won desc;
 
 -- Give us the constructor champions over the years
+alter session set nls_numeric_characters = ',.';
+
 select
   c.season,
   c.points,
@@ -637,53 +771,6 @@ group by season
        ,familyname
        ,constructorname
 ) order by season,constructorname,outqualify_teammate;
-
--- Get the starting grid for the latest race in current season
-select
-  season,
-  round,
-  circuitname,
-  locality,
-  country,
-  racedate,
-  drivernumber,
-  permanentnumber,
-  code,
-  givenname,
-  familyname, 
-  nationality,
-  constructor,
-  constructornationality,
-  case 
-  when q3 is not null and q2 is not null and q1 is not null then
-    'Q3'
-  when q3 is null and q2 is not null and q1 is not null then 
-    'Q2'
-  when q3 is null and q2 is null and q1 is not null then
-    'Q1'
-  else
-    null
-  end as qualification,  
-  case 
-  when q3 is not null and q2 is not null and q1 is not null then
-    q3
-  when q3 is null and q2 is not null and q1 is not null then 
-    q2
-  when q3 is null and q2 is null and q1 is not null then
-    q1
-  else
-    null
-  end as qualification_time,
-  to_number(position) as starting_grid
-from
-  f1_access.v_mv_f1_qualification_times
-where to_number(season) = to_number(to_char(trunc(sysdate),'RRRR'))
-  and position is not null
-  and to_number(round) = (select min(to_number(round))-1
-                          from f1_access.v_f1_upcoming_races
-                          where to_number(season) = to_number(to_char(trunc(sysdate),'RRRR'))
-                            and to_date(race_date,'RRRR-MM-DD') >= trunc(sysdate))
-order by to_number(position) asc;
 
 -- Give us the fastest qualification lap on a track
 select season,
