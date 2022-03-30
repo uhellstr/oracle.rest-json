@@ -8,12 +8,16 @@
 
 alter session set statistics_level=ALL;
 
+-- This is needed since ergast returns data witth decimal '.'
+
+alter session set nls_numeric_characters = '.,';
+
 -- Tracks and races in order by season and race
-select vt.circuitid
+select vr.season
+       ,vr.round
+       ,vt.circuitid
        ,vt.info
        ,vt.circuitname
-       ,vr.season
-       ,vr.round
        ,vr.lat
        ,vr.longitude
        ,vr.locality
@@ -26,8 +30,6 @@ order by to_number(vr.season) desc, to_number(vr.round) asc;
 -- Give us the current standings in the current season or if between seasons the last season
 -- Depending on your NLS settings you might have to set numeric_characters correct
 
-alter session set nls_numeric_characters = '.,';
-
 select vfd.season
        ,rownum as position
        ,vfd.race
@@ -38,18 +40,18 @@ select vfd.season
 from f1_access.v_f1_driverstandings vfd
 where vfd.season = (with future_races as -- We need to handle between seasons where there are no races
                     (
-                      select count(vfu.season) as any_races
+                      select /*+ MATERIALIZE */ count(vfu.season) as any_races
                       from f1_access.v_f1_upcoming_races vfu
-                      where vfu.season = to_char(trunc(sysdate,'RRRR'))
+                      where vfu.season = substr(to_char(trunc(sysdate,'YEAR')),1,4)  --Fix to YEAR and substr(1,4) to garantee that we only get the YEAR part
                     )
                     select season -- Is current season finished yet?
                        from
                        (
                          select to_date(r.race_date,'RRRR-MM-DD') as race_date
                                 ,case
-                                   when (r.race_date < trunc(sysdate) and x.any_races < 1) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
-                                   when r.race_date < trunc(sysdate) then to_char(trunc(sysdate),'RRRR')
-                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
+                                   when (r.race_date < trunc(sysdate) and x.any_races < 1) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
+                                   when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
+                                   when (r.race_date > trunc(sysdate) and x.any_races > 0) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
                                    else '1900'
                                  end as season
                          from f1_access.v_f1_seasons_race_dates r
@@ -59,8 +61,6 @@ where vfd.season = (with future_races as -- We need to handle between seasons wh
                                                       where rd.season  = r.season)
                         ))
 order by to_number(points) desc;
-
---alter session set nls_numeric_characters = ',.';
 
 -- Give us the race winner and drivers with score for the last race in 
 -- current season or last season if between seasons.
@@ -99,18 +99,18 @@ from
   f1_access.v_mv_f1_results vfr
 where vfr.season = (with future_races as -- We need to handle between seasons where there are no races
                     (
-                      select count(vfu.season) as any_races
+                      select /*+ MATERIALIZE */ count(vfu.season) as any_races
                       from f1_access.v_f1_upcoming_races vfu
-                      where vfu.season = to_char(trunc(sysdate,'RRRR'))
+                      where vfu.season = substr(to_char(trunc(sysdate,'YEAR')),1,4)  --Fix to YEAR and substr(1,4) to garantee that we only get the YEAR part
                     )
                     select season -- Is current season finished yet?
                        from
                        (
                          select to_date(r.race_date,'RRRR-MM-DD') as race_date
                                 ,case
-                                   when (r.race_date < trunc(sysdate) and x.any_races < 1) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
-                                   when r.race_date < trunc(sysdate) then to_char(trunc(sysdate),'RRRR')
-                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
+                                   when (r.race_date < trunc(sysdate) and x.any_races < 1) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
+                                   when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
+                                   when (r.race_date > trunc(sysdate) and x.any_races > 0) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
                                    else '1900'
                                  end as season
                          from f1_access.v_f1_seasons_race_dates r
@@ -122,13 +122,13 @@ where vfr.season = (with future_races as -- We need to handle between seasons wh
   and position is not null
   and vfr.race = (with last_race as -- we need to check if any upcoming races or if the last race for the season is done.
                               (
-                                select nvl(min(to_number(x.round))-1,-1) as race -- check if any upcoming races this seaseon -1 and season is done
+                                select /*+ MATERIALIZE */  nvl(min(to_number(x.round)-1),-1) as race -- check if any upcoming races this seaseon -1 and season is done
                                 from f1_access.v_f1_upcoming_races x
-                                where x.season = to_char(trunc(sysdate,'RRRR'))
+                                where x.season = substr(to_char(trunc(sysdate,'YEAR')),1,4)
                               )
                               select case when race = -1 then (select max(to_number(y.round))
                                                                from  f1_access.v_f1_races y
-                                                               where y.season = vfr.season)
+                                                               where y.season = to_char(to_number(vfr.season)-1))
                                       else race
                                       end race
                                       from last_race
@@ -178,18 +178,18 @@ from
   f1_access.v_mv_f1_qualification_times vfq
 where vfq.season = (with future_races as -- We need to handle between seasons where there are no races
                     (
-                      select count(vfu.season) as any_races
+                      select /*+ MATERIALIZE */ count(vfu.season) as any_races
                       from f1_access.v_f1_upcoming_races vfu
-                      where vfu.season = to_char(trunc(sysdate,'RRRR'))
+                      where vfu.season = substr(to_char(trunc(sysdate,'YEAR')),1,4)  --Fix to YEAR and substr(1,4) to garantee that we only get the YEAR part
                     )
                     select season -- Is current season finished yet?
                        from
                        (
                          select to_date(r.race_date,'RRRR-MM-DD') as race_date
                                 ,case
-                                   when (r.race_date < trunc(sysdate) and x.any_races < 1) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
-                                   when r.race_date < trunc(sysdate) then to_char(trunc(sysdate),'RRRR')
-                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
+                                   when (r.race_date < trunc(sysdate) and x.any_races < 1) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
+                                   when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
+                                   when (r.race_date > trunc(sysdate) and x.any_races > 0) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
                                    else '1900'
                                  end as season
                          from f1_access.v_f1_seasons_race_dates r
@@ -201,13 +201,13 @@ where vfq.season = (with future_races as -- We need to handle between seasons wh
   and position is not null
   and to_number(round) = (with last_race as -- we need to check if any upcoming races or if the last race for the season is done.
                               (
-                                select nvl(min(to_number(x.round))-1,-1) as race -- check if any upcoming races this seaseon -1 and season is done
+                                select /*+ MATERIALIZE */  nvl(min(to_number(x.round)-1),-1) as race -- check if any upcoming races this seaseon -1 and season is done
                                 from f1_access.v_f1_upcoming_races x
-                                where x.season = to_char(trunc(sysdate,'RRRR'))
+                                where x.season = substr(to_char(trunc(sysdate,'YEAR')),1,4)
                               )
                               select case when race = -1 then (select max(to_number(y.round))
                                                                from  f1_access.v_f1_races y
-                                                               where y.season = vfq.season)
+                                                               where y.season = to_char(to_number(vfq.season)-1))
                                       else race
                                       end race
                                       from last_race
@@ -258,18 +258,18 @@ select vfq.familyname
 from f1_access.v_f1_qualificationtimes vfq
 where vfq.season = (with future_races as -- We need to handle between seasons where there are no races
                     (
-                      select count(vfu.season) as any_races
+                      select /*+ MATERIALIZE */ count(vfu.season) as any_races
                       from f1_access.v_f1_upcoming_races vfu
-                      where vfu.season = to_char(trunc(sysdate,'RRRR'))
+                      where vfu.season = substr(to_char(trunc(sysdate,'YEAR')),1,4)
                     )
                     select season -- Is current season finished yet?
                        from
                        (
                          select to_date(r.race_date,'RRRR-MM-DD') as race_date
                                 ,case
-                                   when (r.race_date < trunc(sysdate) and x.any_races < 1) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
-                                   when r.race_date < trunc(sysdate) then to_char(trunc(sysdate),'RRRR')
-                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
+                                   when (r.race_date < trunc(sysdate) and x.any_races < 1) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
+                                   when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
+                                   when (r.race_date > trunc(sysdate) and x.any_races > 0) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
                                    else '1900'
                                  end as season
                          from f1_access.v_f1_seasons_race_dates r
@@ -304,8 +304,8 @@ from
                        (
                          select to_date(r.race_date,'RRRR-MM-DD') as race_date
                                 ,case 
-                                   when r.race_date < trunc(sysdate) then to_char(trunc(sysdate),'RRRR')
-                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
+                                   when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
+                                   when r.race_date > trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
                                    else '1900'
                                  end as season
                          from f1_access.v_f1_seasons_race_dates r
@@ -359,8 +359,8 @@ from
                        (
                          select to_date(r.race_date,'RRRR-MM-DD') as race_date
                                 ,case 
-                                   when r.race_date < trunc(sysdate) then to_char(trunc(sysdate),'RRRR')
-                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
+                                   when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
+                                   when r.race_date > trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
                                    else '1900'
                                  end as season
                          from f1_access.v_f1_seasons_race_dates r
@@ -392,8 +392,8 @@ where to_number(c.race) = (select max(to_number(d.round))
                        (
                          select to_date(r.race_date,'RRRR-MM-DD') as race_date
                                 ,case 
-                                   when r.race_date < trunc(sysdate) then to_char(trunc(sysdate),'RRRR')
-                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
+                                   when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
+                                   when r.race_date > trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
                                    else '1900'
                                  end as season
                          from f1_access.v_f1_seasons_race_dates r
@@ -423,8 +423,8 @@ where to_number(c.race) = (select max(to_number(d.round))
                        (
                          select to_date(r.race_date,'RRRR-MM-DD') as race_date
                                 ,case 
-                                   when r.race_date < trunc(sysdate) then to_char(trunc(sysdate),'RRRR')
-                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(trunc(sysdate),'RRRR'))-1)
+                                   when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
+                                   when r.race_date > trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
                                    else '1900'
                                  end as season
                          from f1_access.v_f1_seasons_race_dates r
@@ -512,18 +512,18 @@ select
     l.laptimes_millis
 from
     f1_access.v_mv_f1_lap_times l
-where l.season > 1999
+where to_number(l.season) > 1999
   and l.circuitid = 'monza'
   and l.laptimes_millis = (select min(x.laptimes_millis)
                               from f1_access.v_mv_f1_lap_times x
-                              where x.season > 1999
+                              where to_number(x.season) > 1999
                                and x.circuitid = 'monza');
                                
 -- List info about swedish drivers in F1 history!
 select * 
 from f1_access.v_f1_drivers
 where upper(nationality) = 'SWEDISH'
-order by to_date(dateofbirth,'YYYY-MM-DD') desc;
+order by to_date(dateofbirth,'RRRR-MM-DD') desc;
 
 -- Show us the "active" years for swedish f1 drivers and there best result and total number of races in there carier.
 select  givenname
@@ -761,7 +761,7 @@ select q.season
 from f1_access.v_mv_f1_qualification_times q
 where q.constructor = (select distinct(q1.constructor)
                        from f1_access.v_mv_f1_qualification_times q1
-                       where q1.season = 2018
+                       where q1.season = '2018'
                          and q1.constructor = q.constructor)
   and to_number(q.season) = 2018
 ) where internal_position = 1
@@ -870,7 +870,7 @@ from
   where f1r.circuitid = 'silverstone'
     and position = 1
     and driverid = 'hamilton'
-order by season desc;
+order by f1r.season desc;
 
 -- Give us the winners at Silverstonde thru history and the total number of wins.
 select circuitname,
@@ -929,7 +929,7 @@ where lower(r.status) = 'accident'
 group by r.driverid
 ) order by number_of_accidents desc;
 
--- Fatal accident during races according to status...
+-- Fatal accident on track (Senna did not pronounced dead until leaving track)
 select r.*
 from f1_access.v_mv_f1_results r
 where lower(r.status) = 'fatal accident';
