@@ -38,4 +38,46 @@ begin
 
 end to_millis;
 /
+
+create or replace function f1_logik.get_cur_f1_season 
+(
+  p_in_cur_year in varchar2 default substr(to_char(trunc(sysdate,'year')),1,4) 
+) 
+return varchar2 result_cache
+as 
+
+ lv_season varchar2(4);
+ 
+begin
+
+    with future_races as -- We need to handle between seasons where there are no races
+    (
+      select /*+ MATERIALIZE */ count(vfu.season) as any_races
+      from f1_data.v_f1_upcoming_races vfu
+      where vfu.season = substr(to_char(trunc(sysdate,'YEAR')),1,4)  --Fix to YEAR and substr(1,4) to garantee that we only get the YEAR part
+    )
+    select season into lv_season -- Is current season finished yet?
+    from
+    (
+     select to_date(r.race_date,'RRRR-MM-DD') as race_date
+            ,case
+               when (r.race_date < trunc(sysdate) and x.any_races < 1) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
+               when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
+               when (r.race_date > trunc(sysdate) and x.any_races > 0) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
+               else '1900'
+             end as season
+     from f1_data.v_f1_seasons_race_dates r
+          ,future_races x
+     where r.season = p_in_cur_year
+       and to_number(r.round) in (select max(to_number(rd.round)) from f1_data.v_f1_seasons_race_dates rd
+                                  where rd.season  = r.season)
+    );
+    
+    return lv_season;
+    
+end get_cur_f1_season;
+/
+
+grant execute on f1_logik.get_cur_f1_season to f1_access;
+
 @F1_DATA_SCHEDULER.sql
