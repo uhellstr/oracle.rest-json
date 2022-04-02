@@ -38,28 +38,7 @@ select vfd.season
        ,vfd.familyname
        ,vfd.constructorid
 from f1_access.v_f1_driverstandings vfd
-where vfd.season = (with future_races as -- We need to handle between seasons where there are no races
-                    (
-                      select /*+ MATERIALIZE */ count(vfu.season) as any_races
-                      from f1_access.v_f1_upcoming_races vfu
-                      where vfu.season = substr(to_char(trunc(sysdate,'YEAR')),1,4)  --Fix to YEAR and substr(1,4) to garantee that we only get the YEAR part
-                    )
-                    select season -- Is current season finished yet?
-                       from
-                       (
-                         select to_date(r.race_date,'RRRR-MM-DD') as race_date
-                                ,case
-                                   when (r.race_date < trunc(sysdate) and x.any_races < 1) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
-                                   when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
-                                   when (r.race_date > trunc(sysdate) and x.any_races > 0) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
-                                   else '1900'
-                                 end as season
-                         from f1_access.v_f1_seasons_race_dates r
-                              ,future_races x
-                         where r.season = vfd.season
-                           and to_number(r.round) in (select max(to_number(rd.round)) from f1_access.v_f1_seasons_race_dates rd
-                                                      where rd.season  = r.season)
-                        ))
+where vfd.season = f1_logik.get_cur_f1_season  -- result cache function used here to calculate current season to speed up things.
 order by to_number(points) desc;
 
 -- Give us the race winner and drivers with score for the last race in 
@@ -97,28 +76,7 @@ select
   vfr.racetime
 from
   f1_access.v_mv_f1_results vfr
-where vfr.season = (with future_races as -- We need to handle between seasons where there are no races
-                    (
-                      select /*+ MATERIALIZE */ count(vfu.season) as any_races
-                      from f1_access.v_f1_upcoming_races vfu
-                      where vfu.season = substr(to_char(trunc(sysdate,'YEAR')),1,4)  --Fix to YEAR and substr(1,4) to garantee that we only get the YEAR part
-                    )
-                    select season -- Is current season finished yet?
-                       from
-                       (
-                         select to_date(r.race_date,'RRRR-MM-DD') as race_date
-                                ,case
-                                   when (r.race_date < trunc(sysdate) and x.any_races < 1) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
-                                   when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
-                                   when (r.race_date > trunc(sysdate) and x.any_races > 0) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
-                                   else '1900'
-                                 end as season
-                         from f1_access.v_f1_seasons_race_dates r
-                              ,future_races x
-                         where r.season = vfr.season
-                           and to_number(r.round) in (select max(to_number(rd.round)) from f1_access.v_f1_seasons_race_dates rd
-                                                      where rd.season  = r.season)
-                        ))
+where vfr.season = f1_logik.get_cur_f1_season
   and position is not null
   and vfr.race = (with last_race as -- we need to check if any upcoming races or if the last race for the season is done.
                               (
@@ -176,28 +134,7 @@ select
   to_number(vfq.position) as starting_grid
 from
   f1_access.v_mv_f1_qualification_times vfq
-where vfq.season = (with future_races as -- We need to handle between seasons where there are no races
-                    (
-                      select /*+ MATERIALIZE */ count(vfu.season) as any_races
-                      from f1_access.v_f1_upcoming_races vfu
-                      where vfu.season = substr(to_char(trunc(sysdate,'YEAR')),1,4)  --Fix to YEAR and substr(1,4) to garantee that we only get the YEAR part
-                    )
-                    select season -- Is current season finished yet?
-                       from
-                       (
-                         select to_date(r.race_date,'RRRR-MM-DD') as race_date
-                                ,case
-                                   when (r.race_date < trunc(sysdate) and x.any_races < 1) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
-                                   when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
-                                   when (r.race_date > trunc(sysdate) and x.any_races > 0) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
-                                   else '1900'
-                                 end as season
-                         from f1_access.v_f1_seasons_race_dates r
-                              ,future_races x
-                         where r.season = vfq.season
-                           and to_number(r.round) in (select max(to_number(rd.round)) from f1_access.v_f1_seasons_race_dates rd
-                                                      where rd.season  = r.season)
-                        ))
+where vfq.season = f1_logik.get_cur_f1_season
   and position is not null
   and to_number(round) = (with last_race as -- we need to check if any upcoming races or if the last race for the season is done.
                               (
@@ -256,28 +193,7 @@ group by x.season
 select vfq.familyname
       ,count(vfq.familyname) as pole_positions
 from f1_access.v_f1_qualificationtimes vfq
-where vfq.season = (with future_races as -- We need to handle between seasons where there are no races
-                    (
-                      select /*+ MATERIALIZE */ count(vfu.season) as any_races
-                      from f1_access.v_f1_upcoming_races vfu
-                      where vfu.season = substr(to_char(trunc(sysdate,'YEAR')),1,4)
-                    )
-                    select season -- Is current season finished yet?
-                       from
-                       (
-                         select to_date(r.race_date,'RRRR-MM-DD') as race_date
-                                ,case
-                                   when (r.race_date < trunc(sysdate) and x.any_races < 1) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
-                                   when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
-                                   when (r.race_date > trunc(sysdate) and x.any_races > 0) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
-                                   else '1900'
-                                 end as season
-                         from f1_access.v_f1_seasons_race_dates r
-                              ,future_races x
-                         where r.season = vfq.season
-                           and to_number(r.round) in (select max(to_number(rd.round)) from f1_access.v_f1_seasons_race_dates rd
-                                                      where rd.season  = r.season)
-                        ))
+where vfq.season = f1_logik.get_cur_f1_season
   and vfq.position = 1
 group by vfq.familyname;
 
