@@ -41,7 +41,7 @@ end to_millis;
 
 create or replace function f1_logik.get_cur_f1_season 
 (
-  p_in_cur_year in varchar2 default substr(to_char(trunc(sysdate,'year')),1,4) 
+  p_in_cur_year in varchar2 default to_char(current_date,'RRRR') 
 ) 
 return varchar2 result_cache
 as 
@@ -61,9 +61,9 @@ begin
     (
      select to_date(r.race_date,'RRRR-MM-DD') as race_date
             ,case
-               when (r.race_date < trunc(sysdate) and x.any_races < 1) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
-               when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
-               when (r.race_date > trunc(sysdate) and x.any_races > 0) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
+               when (r.race_date < trunc(sysdate) and x.any_races < 1) then to_char(to_number(to_char(current_date,'RRRR') - 1))
+               when r.race_date < trunc(sysdate) then to_char(current_date,'RRRR')
+               when (r.race_date > trunc(sysdate) and x.any_races > 0) then to_char(current_date,'RRRR')
                else '1900'
              end as season
      from f1_data.v_f1_seasons_race_dates r
