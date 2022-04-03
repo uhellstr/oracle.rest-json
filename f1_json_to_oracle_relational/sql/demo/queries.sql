@@ -82,7 +82,7 @@ where vfr.season = f1_logik.get_cur_f1_season
                               (
                                 select /*+ MATERIALIZE */  nvl(min(to_number(x.round)-1),-1) as race -- check if any upcoming races this seaseon -1 and season is done
                                 from f1_access.v_f1_upcoming_races x
-                                where x.season = substr(to_char(trunc(sysdate,'YEAR')),1,4)
+                                where x.season = to_char(current_date,'RRRR')
                               )
                               select case when race = -1 then (select max(to_number(y.round))
                                                                from  f1_access.v_f1_races y
@@ -140,7 +140,7 @@ where vfq.season = f1_logik.get_cur_f1_season
                               (
                                 select /*+ MATERIALIZE */  nvl(min(to_number(x.round)-1),-1) as race -- check if any upcoming races this seaseon -1 and season is done
                                 from f1_access.v_f1_upcoming_races x
-                                where x.season = substr(to_char(trunc(sysdate,'YEAR')),1,4)
+                                where x.season = to_char(current_date,'RRRR')
                               )
                               select case when race = -1 then (select max(to_number(y.round))
                                                                from  f1_access.v_f1_races y
@@ -220,8 +220,8 @@ from
                        (
                          select to_date(r.race_date,'RRRR-MM-DD') as race_date
                                 ,case 
-                                   when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
-                                   when r.race_date > trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
+                                   when r.race_date < trunc(sysdate) then to_char(current_date,'RRRR')
+                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(current_date,'RRRR') - 1))
                                    else '1900'
                                  end as season
                          from f1_access.v_f1_seasons_race_dates r
@@ -229,7 +229,7 @@ from
                            and to_number(r.round) in (select max(to_number(rd.round)) from f1_access.v_f1_seasons_race_dates rd
                                                       where rd.season  = r.season)
                         ))
-order by d.season desc;
+order by d.season desc; 
 
 -- Give us the number of championships a champ has got! E.g who is the ultimate champ!
 select givenname,
@@ -275,8 +275,8 @@ from
                        (
                          select to_date(r.race_date,'RRRR-MM-DD') as race_date
                                 ,case 
-                                   when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
-                                   when r.race_date > trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
+                                   when r.race_date < trunc(sysdate) then to_char(current_date,'RRRR')
+                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(current_date,'RRRR') - 1))
                                    else '1900'
                                  end as season
                          from f1_access.v_f1_seasons_race_dates r
@@ -308,8 +308,8 @@ where to_number(c.race) = (select max(to_number(d.round))
                        (
                          select to_date(r.race_date,'RRRR-MM-DD') as race_date
                                 ,case 
-                                   when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
-                                   when r.race_date > trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
+                                   when r.race_date < trunc(sysdate) then to_char(current_date,'RRRR')
+                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(current_date,'RRRR') - 1))
                                    else '1900'
                                  end as season
                          from f1_access.v_f1_seasons_race_dates r
@@ -339,8 +339,8 @@ where to_number(c.race) = (select max(to_number(d.round))
                        (
                          select to_date(r.race_date,'RRRR-MM-DD') as race_date
                                 ,case 
-                                   when r.race_date < trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')),1,4)
-                                   when r.race_date > trunc(sysdate) then substr(to_char(trunc(sysdate,'YEAR')-1),1,4)
+                                   when r.race_date < trunc(sysdate) then to_char(current_date,'RRRR')
+                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(current_date,'RRRR') - 1))
                                    else '1900'
                                  end as season
                          from f1_access.v_f1_seasons_race_dates r
