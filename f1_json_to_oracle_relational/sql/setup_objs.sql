@@ -9,6 +9,10 @@ ALTER USER "F1_LOGIK" DEFAULT ROLE "CONNECT","F1_DATA_FORVALT_ROLE";
 @F1_INIT_PKG_BODY.sql
 @F1_ACCESS_OBJS.sql
 
+REM
+REM Helper functions
+REM 
+
 create or replace function f1_logik.to_millis 
 (
     p_in_laptime in varchar2
@@ -79,5 +83,37 @@ end get_cur_f1_season;
 /
 
 grant execute on f1_logik.get_cur_f1_season to f1_access;
+
+create or replace function get_check_season 
+(
+  p_in_cur_year in varchar2 default to_char(current_date,'rrrr') 
+) 
+return varchar2 result_cache
+as
+
+ lv_retval varchar2(4);
+ 
+begin
+
+    select season into lv_retval -- Is current season finished yet?
+    from
+    (
+     select to_date(r.race_date,'RRRR-MM-DD') as race_date
+            ,case 
+               when r.race_date < trunc(sysdate) then to_char(current_date,'RRRR')
+               when r.race_date > trunc(sysdate) then to_char(to_number(to_char(current_date,'RRRR') - 1))
+               else '1900'
+             end as season
+     from f1_data.v_f1_seasons_race_dates r
+     where r.season = p_in_cur_year
+       and to_number(r.round) in (select max(to_number(rd.round)) from f1_data.v_f1_seasons_race_dates rd
+                                  where rd.season  = r.season)
+    );
+  return lv_retval;
+  
+end get_check_season;
+/
+
+grant execute on f1_logik.get_check_season to f1_access;
 
 @F1_DATA_SCHEDULER.sql

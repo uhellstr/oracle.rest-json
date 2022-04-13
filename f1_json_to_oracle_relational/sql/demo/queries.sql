@@ -215,20 +215,7 @@ from
                     from f1_access.v_f1_driverstandings e
                     where e.season = d.season)
       and d.position = 1
-      and d.season <= (select season -- Is current season finished yet?
-                       from
-                       (
-                         select to_date(r.race_date,'RRRR-MM-DD') as race_date
-                                ,case 
-                                   when r.race_date < trunc(sysdate) then to_char(current_date,'RRRR')
-                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(current_date,'RRRR') - 1))
-                                   else '1900'
-                                 end as season
-                         from f1_access.v_f1_seasons_race_dates r
-                         where r.season = d.season
-                           and to_number(r.round) in (select max(to_number(rd.round)) from f1_access.v_f1_seasons_race_dates rd
-                                                      where rd.season  = r.season)
-                        ))
+      and d.season <= f1_logik.get_check_season
 order by d.season desc; 
 
 -- Give us the number of championships a champ has got! E.g who is the ultimate champ!
@@ -270,20 +257,7 @@ from
                     from f1_access.v_f1_driverstandings e
                     where e.season = d.season)
       and d.position = 1
-      and d.season <= (select season -- Is current season finished yet?
-                       from
-                       (
-                         select to_date(r.race_date,'RRRR-MM-DD') as race_date
-                                ,case 
-                                   when r.race_date < trunc(sysdate) then to_char(current_date,'RRRR')
-                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(current_date,'RRRR') - 1))
-                                   else '1900'
-                                 end as season
-                         from f1_access.v_f1_seasons_race_dates r
-                         where r.season = d.season
-                           and to_number(r.round) in (select max(to_number(rd.round)) from f1_access.v_f1_seasons_race_dates rd
-                                                      where rd.season  = r.season)
-                        ))
+      and d.season <= f1_logik.get_check_season
 ) group by driverid,givenname,familyname,nationality
 ) order by championships_won desc;
 
@@ -303,20 +277,7 @@ where to_number(c.race) = (select max(to_number(d.round))
                            from f1_access.v_f1_races d
                            where to_number(d.season) = to_number(c.season))
   and to_number(c.position) = 1
-  and c.season <= (select season -- Is current season finished yet?
-                       from
-                       (
-                         select to_date(r.race_date,'RRRR-MM-DD') as race_date
-                                ,case 
-                                   when r.race_date < trunc(sysdate) then to_char(current_date,'RRRR')
-                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(current_date,'RRRR') - 1))
-                                   else '1900'
-                                 end as season
-                         from f1_access.v_f1_seasons_race_dates r
-                         where r.season = c.season
-                           and to_number(r.round) in (select max(to_number(rd.round)) from f1_access.v_f1_seasons_race_dates rd
-                                                      where rd.season  = r.season)
-                        ))
+  and c.season <= f1_logik.get_check_season
 order by to_number(c.season) desc;
 
 -- Which constructore has most championships over all ?
@@ -334,20 +295,7 @@ where to_number(c.race) = (select max(to_number(d.round))
                            from f1_access.v_f1_races d
                            where to_number(d.season) = to_number(c.season))
   and to_number(c.position) = 1
-  and c.season <= (select season -- Is current season finished yet?
-                       from
-                       (
-                         select to_date(r.race_date,'RRRR-MM-DD') as race_date
-                                ,case 
-                                   when r.race_date < trunc(sysdate) then to_char(current_date,'RRRR')
-                                   when r.race_date > trunc(sysdate) then to_char(to_number(to_char(current_date,'RRRR') - 1))
-                                   else '1900'
-                                 end as season
-                         from f1_access.v_f1_seasons_race_dates r
-                         where r.season = c.season
-                           and to_number(r.round) in (select max(to_number(rd.round)) from f1_access.v_f1_seasons_race_dates rd
-                                                      where rd.season  = r.season)
-                        ))
+  and c.season <= f1_logik.get_check_season
 group by   c.constructorid,
            c.constructorinfo,
            c.constructorname,
