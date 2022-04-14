@@ -78,19 +78,7 @@ from
   f1_access.v_mv_f1_results vfr
 where vfr.season = f1_logik.get_cur_f1_season
   and position is not null
-  and vfr.race = (with last_race as -- we need to check if any upcoming races or if the last race for the season is done.
-                              (
-                                select /*+ MATERIALIZE */  nvl(min(to_number(x.round)-1),-1) as race -- check if any upcoming races this seaseon -1 and season is done
-                                from f1_access.v_f1_upcoming_races x
-                                where x.season = to_char(current_date,'RRRR')
-                              )
-                              select case when race = -1 then (select max(to_number(y.round))
-                                                               from  f1_access.v_f1_races y
-                                                               where y.season = to_char(to_number(vfr.season)-1))
-                                      else race
-                                      end race
-                                      from last_race
-                            )
+  and vfr.race = f1_logik.get_last_race
 order by to_number(vfr.position) asc
 fetch first 10 rows only;
 
@@ -136,20 +124,29 @@ from
   f1_access.v_mv_f1_qualification_times vfq
 where vfq.season = f1_logik.get_cur_f1_season
   and position is not null
-  and to_number(round) = (with last_race as -- we need to check if any upcoming races or if the last race for the season is done.
-                              (
-                                select /*+ MATERIALIZE */  nvl(min(to_number(x.round)-1),-1) as race -- check if any upcoming races this seaseon -1 and season is done
-                                from f1_access.v_f1_upcoming_races x
-                                where x.season = to_char(current_date,'RRRR')
-                              )
-                              select case when race = -1 then (select max(to_number(y.round))
-                                                               from  f1_access.v_f1_races y
-                                                               where y.season = to_char(to_number(vfq.season)-1))
-                                      else race
-                                      end race
-                                      from last_race
-                            )
+  and to_number(round) = f1_logik.get_last_race
 order by to_number(position) asc;
+
+-- Check number of laps a driver hold a certain position on track in the current season
+select driverid
+       ,position
+       ,laps_hold_position
+from
+(
+with f1_drivers as
+(
+  select driverid
+  from v_f1_drivers
+)
+select f1_drivers.driverid
+       ,to_number(f1l.position) as position
+       ,count(f1l.position) as laps_hold_position
+from v_mv_f1_lap_times f1l
+inner join f1_drivers
+on  f1l.driverid = f1_drivers.driverid
+where f1l.season = f1_logik.get_cur_f1_season
+group by f1_drivers.driverid,f1l.position
+) order by  position asc,laps_hold_position desc, driverid asc;
 
 -- Get the dominating teams for each season
 with f1_wins as
