@@ -253,3 +253,18 @@ BEGIN
   COMMIT;
 END;
 /
+
+prompt V_F1_OFFICIAL_TIMEDATA
+
+BEGIN
+  ORDS.enable_object (
+    p_enabled      => TRUE, -- Default  { TRUE | FALSE }
+    p_schema       => 'F1_ACCESS',
+    p_object       => 'V_F1_OFFICIAL_TIMEDATA',
+    p_object_type  => 'VIEW', -- Default  { TABLE | VIEW }
+    p_object_alias => 'f1trackdata'
+  );
+    
+  COMMIT;
+END;
+/
