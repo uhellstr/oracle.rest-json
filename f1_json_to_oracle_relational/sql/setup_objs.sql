@@ -23,19 +23,26 @@ is
   v_seconds number;
   v_millis  number;
   lv_retval number;
+  lv_laptime varchar2(15); 
 
 begin
 
-    if regexp_count(p_in_laptime, ':') = 2 then -- We have hours in the string too 
-      v_hour := to_number(substr(p_in_laptime,1,instr(p_in_laptime,':',1)-1));
-      v_minutes := to_number(substr(p_in_laptime,instr(p_in_laptime,':',1)+1,instr(p_in_laptime,':',2)));
-      v_seconds := to_number(substr(p_in_laptime,instr(p_in_laptime,':',1,2)+1,(length(p_in_laptime) - instr(p_in_laptime,'.',1)-1)));
-      v_millis := to_number(substr(p_in_laptime,instr(p_in_laptime,'.',-1)+1));
+    if length(p_in_laptime) = 15 then
+      lv_laptime := regexp_replace(replace(p_in_laptime,'0',''),'^:','');
+    else
+      lv_laptime := p_in_laptime;
+    end if;
+    
+    if regexp_count(lv_laptime, ':') = 2 then -- We have hours in the string too 
+      v_hour := to_number(substr(lv_laptime,1,instr(lv_laptime,':',1)-1));
+      v_minutes := to_number(substr(lv_laptime,instr(lv_laptime,':',1)+1,instr(lv_laptime,':',2)));
+      v_seconds := to_number(substr(lv_laptime,instr(lv_laptime,':',1,2)+1,(length(lv_laptime) - instr(lv_laptime,'.',1)-1)));
+      v_millis := to_number(substr(lv_laptime,instr(lv_laptime,'.',-1)+1));
       lv_retval := ((v_hour * 60) * 60000) + (v_minutes * 60000) + (v_seconds * 1000) + v_millis;
     else -- mi.ss.mi
-      v_minutes := to_number(substr(p_in_laptime,1,instr(p_in_laptime,':',1)-1));
-      v_seconds := to_number(substr(p_in_laptime,instr(p_in_laptime,':',1)+1,(length(p_in_laptime) - instr(p_in_laptime,'.',1)-1)));
-      v_millis  := to_number(substr(p_in_laptime,instr(p_in_laptime,'.',-1)+1));
+      v_minutes := to_number(substr(lv_laptime,1,instr(lv_laptime,':',1)-1));
+      v_seconds := to_number(substr(lv_laptime,instr(lv_laptime,':',1)+1,(length(lv_laptime) - instr(lv_laptime,'.',1)-1)));
+      v_millis  := to_number(substr(lv_laptime,instr(lv_laptime,'.',-1)+1));
       lv_retval := (v_minutes * 60000) + (v_seconds * 1000) + v_millis;
     end if;
     return  lv_retval;
