@@ -866,3 +866,43 @@ where vfr.season = (select min(a.season) from v_mv_f1_results a
                       and b.season = vfr.season)
   and vfr.position < 4                    
 order by vfr.season,vfr.race asc;
+
+-- Extra with official telemetry from Formula 1
+
+select
+    season,
+    race,
+    --racetype,
+    --datapoint,
+    --time,
+    drivernumber,
+    team,
+    driver,    
+    laptime,
+    lapnumber,
+    stint,
+    --pitouttime,
+    --pitintime,
+    sector1time,
+    sector2time,
+    sector3time,
+    sector1sessiontime,
+    sector2sessiontime,
+    sector3sessiontime,
+    speedi1,
+    speedi2,
+    speedfl,
+    speedst,
+    ispersonalbest,
+    compound,
+    tyrelife,
+    freshtyre,
+    lapstarttime,
+    trackstatus,
+    isaccurate
+from
+    f1_access.v_f1_official_timedata
+where season = 2022
+  and race = 5
+  and racetype = 'Q'
+  and ispersonalbest = 'True';

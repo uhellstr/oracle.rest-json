@@ -28,7 +28,7 @@ is
 begin
 
     if length(p_in_laptime) = 15 then
-      lv_laptime := regexp_replace(replace(p_in_laptime,'0',''),'^:','');
+      lv_laptime := regexp_replace(replace(p_in_laptime,'0{2,}',''),'^:','');
     else
       lv_laptime := p_in_laptime;
     end if;
