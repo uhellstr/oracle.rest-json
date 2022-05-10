@@ -18,7 +18,8 @@ select f1_logik.to_millis(laptime) from t;
 set serveroutput on
 declare
 
-  lv_timestamp varchar2(15) := '00:01:30.423000';
+  --lv_timestamp varchar2(15) := '00:01:30.423000';
+  lv_timestamp varchar2(15) := '00:01:01.000000';
   lv_laptime varchar2(15);
   lv_retval number;
   v_hour number;
@@ -32,6 +33,7 @@ begin
     lv_laptime := regexp_replace(lv_timestamp,'0{2,}','');
     lv_laptime := regexp_replace(lv_laptime,'^:','');
     lv_laptime := regexp_replace(lv_laptime,'^0','');
+    lv_laptime := regexp_replace(lv_laptime,'$.','.0'); -- end of string still not working...
   else
     lv_laptime := lv_timestamp;
   end if;
