@@ -28,10 +28,14 @@ is
 begin
 
     if length(p_in_laptime) = 15 then
-      lv_laptime := regexp_replace(replace(p_in_laptime,'0{2,}',''),'^:','');
+      lv_laptime := regexp_replace(p_in_laptime,'0{2,}','');
+      lv_laptime := regexp_replace(lv_laptime,'^:','');
+      lv_laptime := regexp_replace(lv_laptime,'^0','');
     else
       lv_laptime := p_in_laptime;
     end if;
+
+    dbms_output.put_line(lv_laptime);
     
     if regexp_count(lv_laptime, ':') = 2 then -- We have hours in the string too 
       v_hour := to_number(substr(lv_laptime,1,instr(lv_laptime,':',1)-1));
@@ -49,6 +53,8 @@ begin
 
 end to_millis;
 /
+
+grant execute on f1_logik.to_millis to f1_access;
 
 create or replace function f1_logik.get_cur_f1_season 
 (
