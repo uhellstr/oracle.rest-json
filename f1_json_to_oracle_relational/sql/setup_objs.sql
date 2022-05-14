@@ -54,7 +54,7 @@ begin
 end to_millis;
 /
 
-grant execute on f1_logik.to_millis to f1_access;
+
 
 create or replace function f1_logik.get_cur_f1_season 
 (
@@ -95,9 +95,9 @@ begin
 end get_cur_f1_season;
 /
 
-grant execute on f1_logik.get_cur_f1_season to f1_access;
 
-create or replace function get_check_season 
+
+create or replace function f1_logik.get_check_season 
 (
   p_in_cur_year in varchar2 default to_char(current_date,'rrrr') 
 ) 
@@ -127,9 +127,9 @@ begin
 end get_check_season;
 /
 
-grant execute on f1_logik.get_check_season to f1_access;
 
-create or replace function get_last_race 
+
+create or replace function f1_logik.get_last_race 
 (
   p_in_cur_year in varchar2 default to_char(current_date,'rrrr') 
 ) return number result_cache 
@@ -158,6 +158,9 @@ begin
 end get_last_race;
 /
 
+grant execute on f1_logik.to_millis to f1_access;
+grant execute on f1_logik.get_cur_f1_season to f1_access;
+grant execute on f1_logik.get_check_season to f1_access;
 grant execute on f1_logik.get_last_race to f1_access;
 
 @F1_DATA_SCHEDULER.sql
