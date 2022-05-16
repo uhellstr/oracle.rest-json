@@ -36,6 +36,7 @@ r"""
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 """
 import cx_Oracle
+cx_Oracle.init_oracle_client(lib_dir="/Users/uhellstr/opt/instantclient_19_8")
 import subprocess
 import getpass
 import getopt
@@ -597,7 +598,7 @@ def check_if_pdb_is_open(db_name,tns,port,use_dns,dns_connect,user,password,pdb_
     else:
         connection = get_oracle_connection(db_name,tns,port,user,password)
 
-    if connection is not "ERROR":
+    if connection != "ERROR":
         if check_pdb_mode(connection,pdb_name):
             retval = True
     connection.close        
@@ -616,7 +617,7 @@ def check_if_pdb_is_appcon(db_name,tns,port,use_dns,dns_connect,user,password,pd
         connection = get_oracle_dns_connection(db_name,dns_connect,user,password)
     else:
         connection = get_oracle_connection(db_name,tns,port,user,password)
-    if connection is not "ERROR":
+    if connection != "ERROR":
         sql_stmt = ("select count(*)"+"\n" +
                     "from v$pdbs" +"\n"+
                     "where application_root = 'YES'" + "\n"+
@@ -646,7 +647,7 @@ def check_if_pdb_is_application_root_clone(db_name,tns,port,use_dns,dns_connect,
         connection = get_oracle_dns_connection(db_name,dns_connect,user,password)
     else:
         connection = get_oracle_connection(db_name,tns,port,user,password)
-    if connection is not "ERROR":
+    if connection != "ERROR":
         sql_stmt = ("select count(*)"+"\n" +
                     "from v$pdbs" +"\n"+
                     "where application_root = 'YES'" + "\n"+
@@ -898,7 +899,7 @@ def check_if_omf_exists(connection):
     c1 = connection.cursor()
     c1.execute(sql_stmt)
     value = str(c1.fetchone()[0])
-    if value is 'N':
+    if value == 'N':
         retvalue = False
     else:
         retvalue = True
@@ -1042,7 +1043,7 @@ def close_pluggable_database(connection,pdb_name):
 """
 def create_pdb_tablespace(connection,bigfile,tablespace_name):
 
-    if bigfile is "Y":
+    if bigfile == "Y":
        sql_stmt = "CREATE BIGFILE TABLESPACE "+tablespace_name.upper()
     else:
        sql_stmt = "CREATE TABLESPACE "+tablespace_name.upper()
