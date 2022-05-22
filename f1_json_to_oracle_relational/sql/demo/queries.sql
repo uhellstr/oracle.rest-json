@@ -870,39 +870,41 @@ order by vfr.season,vfr.race asc;
 -- Extra with official telemetry from Formula 1
 
 select
-    season,
-    race,
-    --racetype,
+    vfo.season,
+    vfo.race,
+    vfo.racetype,
     --datapoint,
     --time,
-    drivernumber,
-    team,
-    driver,    
-    laptime,
-    lapnumber,
-    stint,
+    vfo.drivernumber,
+    vfo.team,
+    vfo.driver,    
+    vfo.laptime,
+    f1_logik.to_millis(vfo.laptime) as millis,
+    vfo.lapnumber,
+    vfo.stint,
     --pitouttime,
     --pitintime,
-    sector1time,
-    sector2time,
-    sector3time,
-    sector1sessiontime,
-    sector2sessiontime,
-    sector3sessiontime,
-    speedi1,
-    speedi2,
-    speedfl,
-    speedst,
-    ispersonalbest,
-    compound,
-    tyrelife,
-    freshtyre,
-    lapstarttime,
-    trackstatus,
-    isaccurate
+    vfo.sector1time,
+    vfo.sector2time,
+    vfo.sector3time,
+    vfo.sector1sessiontime,
+    vfo.sector2sessiontime,
+    vfo.sector3sessiontime,
+    vfo.speedi1,
+    vfo.speedi2,
+    vfo.speedfl,
+    vfo.speedst,
+    vfo.ispersonalbest,
+    vfo.compound,
+    vfo.tyrelife,
+    vfo.freshtyre,
+    vfo.lapstarttime,
+    vfo.trackstatus,
+    vfo.isaccurate
 from
-    f1_access.v_f1_official_timedata
-where season = 2022
-  and race = 5
-  and racetype = 'Q'
-  and ispersonalbest = 'True';
+    f1_access.v_f1_official_timedata vfo
+where vfo.season = 2022
+  and vfo.race = 6
+  and vfo.racetype = 'Q'
+  and vfo.ispersonalbest = 'True'
+order by f1_logik.to_millis(vfo.laptime);

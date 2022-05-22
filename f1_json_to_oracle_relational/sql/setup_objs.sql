@@ -18,43 +18,54 @@ create or replace function f1_logik.to_millis
     p_in_laptime in varchar2
 ) return number 
 is
-  v_hour number;
-  v_minutes number;
-  v_seconds number;
-  v_millis  number;
+  v_hour number;            -- ergast
+  v_minutes number;         -- ergast
+  v_seconds number;         -- ergast
+  v_millis  number;         -- ergast
   lv_retval number;
-  lv_laptime varchar2(15); 
+  lv_hour varchar2(2);      -- f1 telemetry
+  lv_minutes varchar2(10);  -- f1 telemetry
+  lv_seconds varchar2(10);  -- f1 telemetry
+  lv_millis  varchar2(10);  -- f1 telemetry    
+  lv_laptime varchar2(15);  -- f1 telemetry
 
 begin
-
-    if length(p_in_laptime) = 15 then
-      lv_laptime := regexp_replace(p_in_laptime,'0{2,}','');
-      lv_laptime := regexp_replace(lv_laptime,'^:','');
-      lv_laptime := regexp_replace(lv_laptime,'^0','');
-    else
-      lv_laptime := p_in_laptime;
+   
+    if length(p_in_laptime) = 15 then  -- official f1 telemetry
+      lv_hour := substr(p_in_laptime,1,2);
+      lv_minutes := substr(p_in_laptime,4,2);
+      lv_seconds := substr(p_in_laptime,7,2);
+      lv_millis  := replace(substr(p_in_laptime,10,15),'0',''); 
+      --dbms_output.put_line('Hour: '||lv_hour); 
+      --dbms_output.put_line('Minutes: '||lv_minutes);
+      --dbms_output.put_line('Seconds: '||lv_seconds);
+      --dbms_output.put_line('Millisec: '||lv_millis);
+      lv_retval := (to_number(lv_minutes) * 60000) + (to_number(lv_seconds) * 1000) + nvl(to_number(lv_millis),0);
     end if;
-
-    dbms_output.put_line(lv_laptime);
+    if length(p_in_laptime) = 8 then -- official f1 telemetry without millisecs
+      lv_hour := substr(p_in_laptime,1,2);
+      lv_minutes := substr(p_in_laptime,4,2);
+      lv_seconds := substr(p_in_laptime,7,2);
+      lv_retval := (to_number(lv_minutes) * 60000) + (to_number(lv_seconds) * 1000);
+    else -- else calculate using ergast format
+      if regexp_count(lv_laptime, ':') = 2 then -- We have hours in the string too 
+        v_hour := to_number(substr(lv_laptime,1,instr(lv_laptime,':',1)-1));
+        v_minutes := to_number(substr(lv_laptime,instr(lv_laptime,':',1)+1,instr(lv_laptime,':',2)));
+        v_seconds := to_number(substr(lv_laptime,instr(lv_laptime,':',1,2)+1,(length(lv_laptime) - instr(lv_laptime,'.',1)-1)));
+        v_millis := to_number(substr(lv_laptime,instr(lv_laptime,'.',-1)+1));
+        lv_retval := ((v_hour * 60) * 60000) + (v_minutes * 60000) + (v_seconds * 1000) + v_millis;
+      else -- mi.ss.mi
+        v_minutes := to_number(substr(lv_laptime,1,instr(lv_laptime,':',1)-1));
+        v_seconds := to_number(substr(lv_laptime,instr(lv_laptime,':',1)+1,(length(lv_laptime) - instr(lv_laptime,'.',1)-1)));
+        v_millis  := to_number(substr(lv_laptime,instr(lv_laptime,'.',-1)+1));
+        lv_retval := (v_minutes * 60000) + (v_seconds * 1000) + v_millis;
+      end if;
+    end if;  
     
-    if regexp_count(lv_laptime, ':') = 2 then -- We have hours in the string too 
-      v_hour := to_number(substr(lv_laptime,1,instr(lv_laptime,':',1)-1));
-      v_minutes := to_number(substr(lv_laptime,instr(lv_laptime,':',1)+1,instr(lv_laptime,':',2)));
-      v_seconds := to_number(substr(lv_laptime,instr(lv_laptime,':',1,2)+1,(length(lv_laptime) - instr(lv_laptime,'.',1)-1)));
-      v_millis := to_number(substr(lv_laptime,instr(lv_laptime,'.',-1)+1));
-      lv_retval := ((v_hour * 60) * 60000) + (v_minutes * 60000) + (v_seconds * 1000) + v_millis;
-    else -- mi.ss.mi
-      v_minutes := to_number(substr(lv_laptime,1,instr(lv_laptime,':',1)-1));
-      v_seconds := to_number(substr(lv_laptime,instr(lv_laptime,':',1)+1,(length(lv_laptime) - instr(lv_laptime,'.',1)-1)));
-      v_millis  := to_number(substr(lv_laptime,instr(lv_laptime,'.',-1)+1));
-      lv_retval := (v_minutes * 60000) + (v_seconds * 1000) + v_millis;
-    end if;
     return  lv_retval;
 
 end to_millis;
 /
-
-
 
 create or replace function f1_logik.get_cur_f1_season 
 (
