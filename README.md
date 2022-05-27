@@ -2,7 +2,6 @@
 This is a demo of Oracle's functionality of using and creating Rest Based services and how to parse JSON documents.
 
 - How to publish REST based services direct from the Oracle database and example app written in Node to consume them.
-- How to consume REST based F1 service from ergast.com and how to parse json to relation data to be able to query all stats thru SQL.
 
 # Publish Oracle data as REST service thru PL/SQL
 
@@ -202,78 +201,7 @@ $ node sweden_graph.js
 There is one configuration file you need to be aware of. You can change the "resturl" value for all
 of the node apps in "config.json" so it matches your environment. 
 
-# How to consume a REST service and transform JSON to Relational data for SQL analysis ?
-
-## Requirements:
-
-* Linux environment supported like Centos7. The demo is not tested or has any scripts for Windows.
-* Oracle 12c or higher. (For a non licensed environment I strongly recommend to use Oracle 18c Express Edition or higher) 
-* Oracle Application Express version 5 or higher. Recommend version 18.x and higher and prefered use the lastest possible version.
-  Even if you do not use APEX the PL/SQL API used to fetch data from ergast uses packaged API only found in APEX so APEX *MUST* be installed.
-* ORDS is used if you want to test AutoRest functionality and then i recommend 20.2 version or higher.
-
-Note: ergast is used only for non commercial applications. You cannot use this data and build any kind of commercial applications as per there license.
-
-I'm a huge fan of Formula 1. I've been following it since i was a kid and the "Superswede" Ronnie Peterson was my absolute
-hero. I still belive the "Lotus 72D" is one of the most beatiful oneseater cars ever built. As a "datanerd". i'm more into analysing data then the database technology itself. So having a lot of F1 data for historical Formula 1 races, season, laptimes etc would be great to help me better understand how the teams differs from each others, how drivers perform during a season, what enginges seems to have
-more problems then others etc.
-
-Now, thanks to https://ergast.com/mrd/ I finally found a way to be able to get hold of data and do some analysis of my favorite
-motorsport besides Indycar. This site publish allot of statistical data in form of REST services and you can download the raw
-JSON document and store them in a Oracle database (Oracle supports JSON storage in tables) and the parse and query the data as if it is
-a normal relational table.
-
-If you want to setup this demo yourself be warned. You will download 10 000's of relative small JSON documents and the volume of
-races are huge. The first official Formula 1 race was done in the 1950's. Not all years have the full statistics, it was not until
-around 1996 the technology was there to get lot of more data that is now public for publishing. But in anycase this will take some
-time to get your tables loaded before you can start to analyze. On a medium to good internet connection assume it will take around
-4-5 hours to get the data in place. The data is loaded thru a scheduled job so you do not need to sit around and wait for it to be finished. 
-
-When everything is in place you will have information about all F1 seasons, all races, qualification times , lap times , constructors and drivers.
-
-All the code is in the subfolder "f1_son_to_oracle_relational" in this github repo.
-
-## How to install the basetables and start load the data from ergast ?
-
-1. First you need to run the "setup_schema.sql" script as SYS.
-
-Now before running it look at the ACL part and change the password for the F1_DATA schema if not in a private demo environment. 
-You must have APEX installed before attempting to run the script. The script will automaticly find out the latest installed version
-of APEX and add it to the ACL list.
-
-
-You also have to look at the DBMS_NETWORK_ACL_ADMIN.ASSIGN_ACL where you set the hostname for the server where the Oracle database is installed.
-
-In the example it is set to 'localhost'. You need to change that to match your environment if necessary.
-
-The ACL part (Access Control List) is where we tell the Oracle database that we allow for doing http calls from inside the database
-and to a website outside our protected environment. It is quite complex configuration so I refer to the official Oracle documentation for you to read more about ACL's in Oracle.
-
-When done with the necessary changes you can run the script as SYS.
-
-When it is done you could try to do a call to ergast thru the SQL below to see if it works. If not you need to start to check for any errors in the setup for ACL, firewall issues etc that could cause the callout to fail.
-
-select apex_web_service.make_rest_request(
-    p_url         => 'http://ergast.com/api/f1/seasons.json?limit=1000', 
-    p_http_method => 'GET' 
-) as result from dual;
-
-2. When, and only when the query above works it is time to setup the schema and initiate tables, views and setup scheduled jobs
-for downloading data from ergast
-
-As the SYS user runt the following scripts
-
- ```
-SQL> conn sys@<TNS-ALIAS> as sysdba 
-SQL> @setup_schemas.sql
-SQL> @setup_objs.sql
-```
+Note: How to consume Formula 1 ergast REST api and build your own Formula 1 statistical database is moved to it's own repository from now.
+See:
+https://github.com/uhellstr/oracle-f1-stats-db
  
-You will get some errors due to way the scripts where generated som indexes are duplicated. You can however just ignore them.
-
-## How to use the data for analysis ?
-
-
-I have provided a SQL script called "queries.sql" you can use for start analysing the data. I also provided a number of materialized views that speeds up some queries due to minimize parsing time when joining different tables with each others.
-
-There is also som additional script for handling ORDS AutoRest (E.g publish back the relational data as REST services). Scripts for allowing other users then F1_ACCESS to access data thru views and som python scripts for loading images of drivers,tracks etc and Jupyter Notebook examples on how to plot graphs using pandas and mathplotlib for the Formula 1 2021 season. See the included README_FIRST.txt for more information.
